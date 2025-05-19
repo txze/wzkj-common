@@ -1,4 +1,4 @@
-module wzkj-common
+module github.com/txze/wzkj-common
 
 go 1.23.0
 
