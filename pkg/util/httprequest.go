@@ -2,14 +2,23 @@ package util
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/hzxiao/goutil"
 )
 
-func HttpGet(url string) (goutil.Map, error) {
-	res, err := http.Get(url)
+func HttpGet(uri string, params goutil.Map) (goutil.Map, error) {
+	var values = url.Values{}
+	for key := range params {
+		values.Add(key, params.GetString(key))
+	}
+
+	uri = fmt.Sprintf("%s?%s", uri, values.Encode())
+
+	res, err := http.Get(uri)
 	if err != nil {
 		return nil, err
 	}
