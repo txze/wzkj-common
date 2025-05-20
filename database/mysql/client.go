@@ -3,7 +3,7 @@ package mysql
 import (
 	_ "github.com/go-sql-driver/mysql"
 
-	log "wzkj-common/logger"
+	log "github.com/txze/wzkj-common/logger"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"

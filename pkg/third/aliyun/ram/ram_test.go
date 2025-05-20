@@ -3,7 +3,7 @@ package ram_test
 import (
 	"testing"
 
-	"wzkj-common/pkg/third/aliyun/ram"
+	"github.com/txze/wzkj-common/pkg/third/aliyun/ram"
 
 	"github.com/aliyun/alibaba-cloud-sdk-go/services/sts"
 )

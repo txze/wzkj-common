@@ -2,11 +2,12 @@ package config
 
 import (
 	"context"
-	"github.com/spf13/viper"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/spf13/viper"
+	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
 func EtcdConfig(endpoint string, path string) {

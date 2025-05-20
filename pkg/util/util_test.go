@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"wzkj-common/pkg/util"
+	"github.com/txze/wzkj-common/pkg/util"
 
 	"github.com/stretchr/testify/assert"
 )

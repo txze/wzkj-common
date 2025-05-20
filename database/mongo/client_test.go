@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"wzkj-common/database/mongo"
+	"github.com/txze/wzkj-common/database/mongo"
 
 	"github.com/qiniu/qmgo"
 	"github.com/qiniu/qmgo/operator"

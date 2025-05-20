@@ -2,7 +2,8 @@ package jwt
 
 import (
 	"errors"
-	"wzkj-common/pkg/util"
+
+	"github.com/txze/wzkj-common/pkg/util"
 
 	"github.com/dgrijalva/jwt-go"
 )

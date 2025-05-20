@@ -3,7 +3,7 @@ package surprise_test
 import (
 	"testing"
 
-	"wzkj-common/pkg/surprise"
+	"github.com/txze/wzkj-common/pkg/surprise"
 )
 
 func TestBanner(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"wzkj-common/logger"
+	"github.com/txze/wzkj-common/logger"
 
 	"github.com/qiniu/qmgo"
 )

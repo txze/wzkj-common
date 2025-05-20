@@ -3,8 +3,8 @@ package tencent_test
 import (
 	"testing"
 
-	"wzkj-common/lbs/tencent"
-	"wzkj-common/pkg/util"
+	"github.com/txze/wzkj-common/lbs/tencent"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 func TestLocation(t *testing.T) {

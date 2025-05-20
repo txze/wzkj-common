@@ -8,7 +8,8 @@ import (
 	mrand "math/rand"
 	"regexp"
 	"strings"
-	"wzkj-common/pkg/util"
+
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 // seeded indicates if math/rand has been seeded

@@ -3,7 +3,7 @@ package mredis_test
 import (
 	"testing"
 
-	"wzkj-common/database/mredis"
+	"github.com/txze/wzkj-common/database/mredis"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/stretchr/testify/assert"

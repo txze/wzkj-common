@@ -3,7 +3,7 @@ package jwt_test
 import (
 	"testing"
 
-	"wzkj-common/pkg/jwt"
+	"github.com/txze/wzkj-common/pkg/jwt"
 
 	"github.com/stretchr/testify/assert"
 )

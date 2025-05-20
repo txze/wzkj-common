@@ -2,7 +2,8 @@ package ierr
 
 import (
 	"fmt"
-	"wzkj-common/pkg/util"
+
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 type IError struct {

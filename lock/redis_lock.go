@@ -2,8 +2,9 @@ package lock
 
 import (
 	"fmt"
-	"wzkj-common/database/mredis"
-	"wzkj-common/pkg/ierr"
+
+	"github.com/txze/wzkj-common/database/mredis"
+	"github.com/txze/wzkj-common/pkg/ierr"
 
 	"github.com/gomodule/redigo/redis"
 )

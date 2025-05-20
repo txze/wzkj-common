@@ -3,9 +3,10 @@ package handler
 import (
 	"net/http"
 	"strings"
-	"wzkj-common/logger"
-	"wzkj-common/pkg/ierr"
-	"wzkj-common/pkg/jwt"
+
+	"github.com/txze/wzkj-common/logger"
+	"github.com/txze/wzkj-common/pkg/ierr"
+	"github.com/txze/wzkj-common/pkg/jwt"
 
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
