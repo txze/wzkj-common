@@ -3,14 +3,14 @@ package ierr
 import (
 	"fmt"
 
-	"github.com/txze/wzkj-common/pkg/util"
+	"github.com/hzxiao/goutil"
 )
 
 type IError struct {
-	Code     Code   `json:"code"`
-	Msg      string `json:"msg"` //跟code一致的
-	MoreInfo string `json:"more_info"`
-	Data     util.M `json:"data"`
+	Code     Code       `json:"code"`
+	Msg      string     `json:"msg"` //跟code一致的
+	MoreInfo string     `json:"more_info"`
+	Data     goutil.Map `json:"data"`
 }
 
 func NewIError(code Code, moreInfo string) *IError {
@@ -19,7 +19,7 @@ func NewIError(code Code, moreInfo string) *IError {
 	return &IError{Code: finalCode, MoreInfo: moreInfo}
 }
 
-func NewErrorData(code Code, moreInfo string, data util.M) *IError {
+func NewErrorData(code Code, moreInfo string, data goutil.Map) *IError {
 	// var finalCode = CodeNum*1000 + code
 	var finalCode = code
 	return &IError{Code: finalCode, MoreInfo: moreInfo, Data: data}
