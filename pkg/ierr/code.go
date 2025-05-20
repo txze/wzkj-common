@@ -31,6 +31,13 @@ var (
 	NetworkBusyError       Code = 10011 // 网络繁忙，请稍后再试
 	NetwordError           Code = 10012 // 网络错误
 	PermissionDeined       Code = 10013 // 权限不足
+	WriteFileError         Code = 10011 // 写入文件错误
+	PhoneRepeatError       Code = 10012 // 电话号码重复
+	ThirdCallRequest       Code = 10013 // 外部调用错误
+	ReadFileError          Code = 10014 // 读取文件错误
+	QueueWriteError        Code = 10015 // 写入队列失败
+	QueueReadError         Code = 10016 // 读取队列失败
+	UnexpectedError        Code = 10017 // 意外的错误
 
 	// 数据库相关
 	CreateDataFail    Code = 50001 // 创建数据失败
