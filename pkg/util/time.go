@@ -125,6 +125,16 @@ func WeekStart() time.Time {
 	return time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, now.Location())
 }
 
+func DayStart() time.Time {
+	now := Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+}
+
+func DayEnd() time.Time {
+	now := Now()
+	return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
+}
+
 func WeekEnd() time.Time {
 	now := Now()
 	offset := int(now.Weekday())
