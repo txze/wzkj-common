@@ -2,28 +2,30 @@ package util
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"net/http"
+
+	"github.com/txze/goutil"
 )
 
-func HttpGet(url string) (M, error) {
+func HttpGet(url string) (goutil.Map, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer res.Body.Close()
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var result M
+	var result goutil.Map
 	err = Bytes2S(body, &result)
 	return result, err
 }
 
-func HttpPost(url string, data M) (M, error) {
+func HttpPost(url string, data goutil.Map) (goutil.Map, error) {
 	var body = bytes.NewBuffer([]byte(S2Json(data)))
 	res, err := http.Post(url, "application/json", body)
 	if err != nil {
@@ -32,12 +34,12 @@ func HttpPost(url string, data M) (M, error) {
 
 	defer res.Body.Close()
 
-	resBody, err := ioutil.ReadAll(res.Body)
+	resBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	var result M
+	var result goutil.Map
 	err = Bytes2S(resBody, &result)
 	return result, err
 }
