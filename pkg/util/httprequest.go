@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/txze/goutil"
+	"github.com/hzxiao/goutil"
 )
 
 func HttpGet(url string) (goutil.Map, error) {
