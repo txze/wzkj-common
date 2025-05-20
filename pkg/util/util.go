@@ -25,3 +25,11 @@ func TrimRepeatInt(strs []int) []int {
 
 	return newArr
 }
+
+func AbsInt(data int) int {
+	if data >= 0 {
+		return data
+	}
+
+	return -data
+}
