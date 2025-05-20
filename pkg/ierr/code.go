@@ -30,6 +30,7 @@ var (
 	ConcurrentError        Code = 10010 // 并发错误
 	NetworkBusyError       Code = 10011 // 网络繁忙，请稍后再试
 	NetwordError           Code = 10012 // 网络错误
+	PermissionDeined       Code = 10013 // 权限不足
 
 	// 数据库相关
 	CreateDataFail    Code = 50001 // 创建数据失败
