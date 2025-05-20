@@ -114,3 +114,33 @@ func Now() time.Time {
 	now := time.Now().In(loc)
 	return now
 }
+
+func WeekStart() time.Time {
+	now := Now()
+	offset := int(now.Weekday())
+	if offset == 0 {
+		offset = 7
+	}
+	weekStart := now.AddDate(0, 0, -offset+1)
+	return time.Date(weekStart.Year(), weekStart.Month(), weekStart.Day(), 0, 0, 0, 0, now.Location())
+}
+
+func WeekEnd() time.Time {
+	now := Now()
+	offset := int(now.Weekday())
+	if offset == 0 {
+		offset = 7
+	}
+	weekEnd := now.AddDate(0, 0, 7-offset)
+	return time.Date(weekEnd.Year(), weekEnd.Month(), weekEnd.Day(), 23, 59, 59, 999999999, now.Location())
+}
+
+func MonthStart() time.Time {
+	now := Now()
+	return time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+}
+
+func MonthEnd() time.Time {
+	now := Now()
+	return time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 999999999, now.Location())
+}
