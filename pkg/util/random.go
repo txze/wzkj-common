@@ -43,7 +43,7 @@ func RandomStr(length int) string {
 func RandInt64(min, max int64) int64 {
 	s := rand.NewSource(Now().UnixNano())
 	r := rand.New(s)
-	return min + r.Int63n(max-min+1)
+	return min + r.Int63n(max-min)
 }
 func RandFloat64(min, max float64) float64 {
 	s := rand.NewSource(Now().UnixNano())
