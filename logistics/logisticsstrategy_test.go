@@ -10,8 +10,8 @@ func TestLogisticsContext_QueryLogisticsByNumber(t *testing.T) {
 
 	t.Run("TestLogisticsContext_QueryLogisticsByNumber", func(t *testing.T) {
 		kd := kd100.NewKD100(kd100.KD100Config{
-			KEY:      "xUwyaYSR8331",
-			CUSTOMER: "280D13614D729A608991196DB24BB6C3",
+			KEY:      "xxxx",
+			CUSTOMER: "xxxx",
 		})
 
 		c := &LogisticsContext{
