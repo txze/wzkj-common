@@ -41,7 +41,9 @@ func Dial(name string, dialect string) *GormClient {
 func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	var err error
 	// master dial
-	c.master, err = gorm.Open(mysql.Open(dialect), &gorm.Config{})
+	c.master, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	if err != nil {
 		return c, err
 	}
