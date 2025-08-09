@@ -14,6 +14,8 @@ require (
 	github.com/gomodule/redigo v2.0.0+incompatible
 	github.com/hzxiao/goutil v0.0.0-20191123110841-92eef1219fb2
 	github.com/mattn/go-colorable v0.1.14
+	github.com/mitchellh/mapstructure v1.4.3
+	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.9
 	github.com/silenceper/wechat v1.2.6
 	github.com/smartwalle/alipay/v3 v3.2.25
@@ -70,7 +72,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mitchellh/mapstructure v1.4.3 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
