@@ -24,9 +24,9 @@ var defaultTLSSigAPI *TLSSigAPI
 
 // InitTLSSig 初始化TLS签名API
 func InitTLSSig() {
-	sdkAppIDStr := viper.GetString("tencent.im.sdk_app_id")
-	secretKey := viper.GetString("tencent.im.secret_key")
-	
+	sdkAppIDStr := viper.GetString("tencent.im.appid")
+	secretKey := viper.GetString("tencent.im.secret")
+
 	// 将字符串转换为整数
 	sdkAppID := 0
 	if sdkAppIDStr != "" {
