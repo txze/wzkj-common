@@ -64,3 +64,19 @@ func TestGenUserSig(t *testing.T) {
 		t.Logf("UserSig生成失败（预期行为）: %v", err)
 	}
 }
+
+// TestInitTLSSigError 测试初始化错误处理
+func TestInitTLSSigError(t *testing.T) {
+	// 测试GetTLSSigAPISafe在未初始化时返回错误
+	api, err := GetTLSSigAPISafe()
+	if err == nil {
+		t.Error("GetTLSSigAPISafe应该在没有初始化时返回错误")
+	} else {
+		t.Logf("预期的错误: %v", err)
+	}
+
+	// 测试api为nil
+	if api != nil {
+		t.Error("GetTLSSigAPISafe在未初始化时应该返回nil")
+	}
+}

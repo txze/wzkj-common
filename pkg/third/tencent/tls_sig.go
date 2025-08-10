@@ -1,6 +1,7 @@
 package tencent
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/spf13/viper"
@@ -23,24 +24,44 @@ type TLSSigResponse struct {
 var defaultTLSSigAPI *TLSSigAPI
 
 // InitTLSSig 初始化TLS签名API
-func InitTLSSig() {
+func InitTLSSig() error {
 	sdkAppIDStr := viper.GetString("tencent.im.appid")
 	secretKey := viper.GetString("tencent.im.secret")
 
+	// 检查配置是否完整
+	if sdkAppIDStr == "" {
+		return fmt.Errorf("腾讯云IM配置缺失: tencent.im.appid")
+	}
+	if secretKey == "" {
+		return fmt.Errorf("腾讯云IM配置缺失: tencent.im.secret")
+	}
+
 	// 将字符串转换为整数
-	sdkAppID := 0
-	if sdkAppIDStr != "" {
-		if id, err := strconv.Atoi(sdkAppIDStr); err == nil {
-			sdkAppID = id
-		}
+	sdkAppID, err := strconv.Atoi(sdkAppIDStr)
+	if err != nil {
+		return fmt.Errorf("腾讯云IM配置错误: tencent.im.appid 必须是数字, 当前值: %s, 错误: %v", sdkAppIDStr, err)
+	}
+
+	// 验证SDKAppID的有效性
+	if sdkAppID <= 0 {
+		return fmt.Errorf("腾讯云IM配置错误: tencent.im.appid 必须大于0, 当前值: %d", sdkAppID)
 	}
 
 	defaultTLSSigAPI = NewTLSSigAPI(sdkAppID, secretKey)
+	return nil
 }
 
 // GetTLSSigAPI 获取TLS签名API实例
 func GetTLSSigAPI() *TLSSigAPI {
 	return defaultTLSSigAPI
+}
+
+// GetTLSSigAPISafe 安全获取TLS签名API实例，如果未初始化则返回错误
+func GetTLSSigAPISafe() (*TLSSigAPI, error) {
+	if defaultTLSSigAPI == nil {
+		return nil, fmt.Errorf("TLS签名API未初始化，请先调用InitTLSSig()")
+	}
+	return defaultTLSSigAPI, nil
 }
 
 // NewTLSSigAPI 创建新的TLS签名API实例
