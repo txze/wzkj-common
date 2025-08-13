@@ -154,3 +154,35 @@ func MonthEnd() time.Time {
 	now := Now()
 	return time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 999999999, now.Location())
 }
+
+func HumanDurationZH(d time.Duration) string {
+	if d <= 0 {
+		return "0秒"
+	}
+
+	days := int(d / (24 * time.Hour))
+	d -= time.Duration(days) * 24 * time.Hour
+
+	hours := int(d / time.Hour)
+	d -= time.Duration(hours) * time.Hour
+
+	minutes := int(d / time.Minute)
+	d -= time.Duration(minutes) * time.Minute
+
+	seconds := int(d / time.Second)
+
+	result := ""
+	if days > 0 {
+		result += fmt.Sprintf("%d天", days)
+	}
+	if hours > 0 {
+		result += fmt.Sprintf("%d小时", hours)
+	}
+	if minutes > 0 {
+		result += fmt.Sprintf("%d分钟", minutes)
+	}
+	if seconds > 0 {
+		result += fmt.Sprintf("%d秒", seconds)
+	}
+	return result
+}
