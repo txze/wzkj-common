@@ -9,10 +9,10 @@ import (
 
 // Config 极光一键登录配置
 type Config struct {
-	AppKey       string `mapstructure:"app_key"`       // 应用Key
-	MasterSecret string `mapstructure:"master_secret"` // 主密钥
-	PrivateKey   string `mapstructure:"private_key"`   // RSA私钥
-	APIURL       string `mapstructure:"api_url"`       // API地址
+	AppKey       string `mapstructure:"app_key"`     // 应用Key
+	MasterSecret string `mapstructure:"secret"`      // 主密钥
+	PrivateKey   string `mapstructure:"private_key"` // RSA私钥
+	APIURL       string `mapstructure:"api_url"`     // API地址
 }
 
 // DefaultConfig 获取默认配置
@@ -28,7 +28,7 @@ func LoadConfig() (*Config, error) {
 
 	// 从viper获取配置
 	appKey := viper.GetString("jiguang.app_key")
-	masterSecret := viper.GetString("jiguang.master_secret")
+	masterSecret := viper.GetString("jiguang.secret")
 	privateKey := viper.GetString("jiguang.private_key")
 	apiURL := viper.GetString("jiguang.api_url")
 
