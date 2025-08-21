@@ -1,6 +1,8 @@
 package mysql
 
 import (
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	log "github.com/txze/wzkj-common/logger"
@@ -50,13 +52,33 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	c.master.Logger.LogMode(logger.Info)
 	c.master = c.master.Debug()
 
+	sqlMasterDB, err := c.slave.DB()
+	if err != nil {
+		return c, err
+	}
+
+	sqlMasterDB.SetMaxIdleConns(10)
+	sqlMasterDB.SetMaxOpenConns(100)
+	sqlMasterDB.SetConnMaxLifetime(time.Hour)
+
 	// slave dial
-	c.slave, err = gorm.Open(mysql.Open(dialect), &gorm.Config{})
+	c.slave, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	if err != nil {
 		return c, err
 	}
 	c.slave.Logger.LogMode(logger.Info)
 	c.slave = c.slave.Debug()
+	sqlSlaveDB, err := c.slave.DB()
+	if err != nil {
+		return c, err
+	}
+
+	sqlSlaveDB.SetMaxIdleConns(10)
+	sqlSlaveDB.SetMaxOpenConns(100)
+	sqlSlaveDB.SetConnMaxLifetime(time.Hour)
+
 	return c, nil
 }
 
