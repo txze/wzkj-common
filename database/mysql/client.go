@@ -52,7 +52,7 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	c.master.Logger.LogMode(logger.Info)
 	c.master = c.master.Debug()
 
-	sqlMasterDB, err := c.slave.DB()
+	sqlMasterDB, err := c.master.DB()
 	if err != nil {
 		return c, err
 	}
