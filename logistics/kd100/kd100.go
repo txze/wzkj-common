@@ -23,10 +23,11 @@ func NewKD100(cfg KD100Config) *KD100 {
 	return &KD100{config: cfg}
 }
 
-func (K *KD100) QueryLogisticsByNumber(code, number string) (string, error) {
+func (K *KD100) QueryLogisticsByNumber(code, number, phone string) (string, error) {
 	param := map[string]string{
-		"com": code,
-		"num": number,
+		"com":   code,
+		"num":   number,
+		"phone": phone,
 	}
 
 	// 将参数转换为JSON字符串
