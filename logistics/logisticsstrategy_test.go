@@ -17,7 +17,7 @@ func TestLogisticsContext_QueryLogisticsByNumber(t *testing.T) {
 		c := &LogisticsContext{
 			strategy: kd,
 		}
-		got, err := c.QueryLogisticsByNumber("yuantong", "xxxxxx")
+		got, err := c.QueryLogisticsByNumber("yuantong", "xxxxxx", "")
 		if err != nil {
 			t.Errorf("QueryLogisticsByNumber() error = %v", err)
 			return
