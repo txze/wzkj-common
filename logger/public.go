@@ -107,36 +107,9 @@ func consoleHook(path string) zapcore.Core {
 	level := zap.LevelEnablerFunc(func(lv zapcore.Level) bool {
 		return lv <= zap.FatalLevel
 	})
-	// 设置日志输出
-	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl >= zapcore.ErrorLevel
-	})
-	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel && lvl >= zapcore.DebugLevel
-	})
-
 	consoleWriter := zapcore.AddSync(os.Stdout)
-	consoleDebugging := zapcore.Lock(os.Stdout)
-	consoleErrors := zapcore.Lock(os.Stderr)
 
-	consoleCore := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),
-		consoleDebugging,
-		lowPriority,
-	)
-
-	consoleErrorCore := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encoderConfig),
-		consoleErrors,
-		highPriority,
-	)
-
-	fileCore := zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleWriter, level)
-
-	core := zapcore.NewTee(consoleCore, consoleErrorCore, fileCore)
-
-	return core
-
+	return zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleWriter, level)
 }
 
 func New(path string) *L {
