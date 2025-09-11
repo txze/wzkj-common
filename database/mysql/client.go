@@ -65,6 +65,7 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	// slave dial
 	c.slave, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   NewGormLogger(),
 	})
 	if err != nil {
 		return c, err

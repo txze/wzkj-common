@@ -55,5 +55,12 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 			logger2.Any("rows", rows),
 			logger2.Any("elapsed", elapsed),
 		)
+	} else {
+		logger2.FromContext(ctx).Error(
+			"SQL INFO",
+			logger2.Any("sql", sql),
+			logger2.Any("rows", rows),
+			logger2.Any("elapsed", elapsed),
+		)
 	}
 }
