@@ -32,7 +32,7 @@ func Fatal(msg string, field ...zap.Field) {
 // WithTrace 创建带追踪ID的日志记录
 func WithTrace(c *gin.Context) *zap.Logger {
 	traceID := c.GetString("traceID")
-	if traceID != "" {
+	if traceID == "" {
 		traceID = "unknown"
 	}
 
