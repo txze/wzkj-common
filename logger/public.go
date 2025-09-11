@@ -1,9 +1,10 @@
 package logger
 
 import (
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 var hookCore []zapcore.Core
@@ -99,16 +100,42 @@ func newHook(core zapcore.Core) {
 	}
 }
 
-//针对这个日志可以配置输出位置
+// 针对这个日志可以配置输出位置
 func consoleHook(path string) zapcore.Core {
 	encoderConfig := NewEncoderConfig()
 	encoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	level := zap.LevelEnablerFunc(func(lv zapcore.Level) bool {
 		return lv <= zap.FatalLevel
 	})
-	consoleWriter := zapcore.AddSync(os.Stdout)
+	// 设置日志输出
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel && lvl >= zapcore.DebugLevel
+	})
 
-	return zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleWriter, level)
+	consoleWriter := zapcore.AddSync(os.Stdout)
+	consoleDebugging := zapcore.Lock(os.Stdout)
+	consoleErrors := zapcore.Lock(os.Stderr)
+
+	consoleCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		consoleDebugging,
+		lowPriority,
+	)
+
+	consoleErrorCore := zapcore.NewCore(
+		zapcore.NewJSONEncoder(encoderConfig),
+		consoleErrors,
+		highPriority,
+	)
+
+	fileCore := zapcore.NewCore(zapcore.NewConsoleEncoder(encoderConfig), consoleWriter, level)
+
+	core := zapcore.NewTee(consoleCore, consoleErrorCore, fileCore)
+
+	return core
 
 }
 

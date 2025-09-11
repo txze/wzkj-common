@@ -3,6 +3,9 @@ module github.com/txze/wzkj-common
 go 1.23.0
 
 require (
+	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.11
+	github.com/alibabacloud-go/green-20220302/v2 v2.22.1
+	github.com/alibabacloud-go/tea v1.3.11
 	github.com/aliyun/alibaba-cloud-sdk-go v1.63.107
 	github.com/aliyun/aliyun-oss-go-sdk v3.0.2+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -12,6 +15,7 @@ require (
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/gomodule/redigo v2.0.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/hzxiao/goutil v0.0.0-20191123110841-92eef1219fb2
 	github.com/mattn/go-colorable v0.1.14
 	github.com/mitchellh/mapstructure v1.4.3
@@ -22,6 +26,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tencentyun/cos-go-sdk-v5 v0.7.66
+	github.com/tencentyun/tls-sig-api-v2-golang v1.4.0
 	go.etcd.io/etcd/client/v3 v3.6.0
 	go.mongodb.org/mongo-driver v1.17.3
 	go.uber.org/zap v1.27.0
@@ -33,10 +38,15 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.5 // indirect
+	github.com/alibabacloud-go/debug v1.0.1 // indirect
+	github.com/alibabacloud-go/tea-utils/v2 v2.0.7 // indirect
+	github.com/aliyun/credentials-go v1.4.5 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20180710155616-bc664df96737 // indirect
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/clbanning/mxj v1.8.4 // indirect
+	github.com/clbanning/mxj/v2 v2.7.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2 // indirect
@@ -88,7 +98,7 @@ require (
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/tencentyun/tls-sig-api-v2-golang v1.4.0 // indirect
+	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
