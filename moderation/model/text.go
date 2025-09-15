@@ -15,11 +15,12 @@ import (
 type Text struct {
 	client  *green20220302.Client
 	content string
+	Service string
 }
 
-func (t *Text) Invoke() {
+func (t *Text) Invoke() *green20220302.TextModerationPlusResponseBodyData {
 	if t.content == "" {
-		return
+		return nil
 	}
 	serviceParameters, _ := json.Marshal(
 		map[string]interface{}{
@@ -28,19 +29,19 @@ func (t *Text) Invoke() {
 	)
 
 	request := green20220302.TextModerationPlusRequest{
-		Service:           tea.String("aigc_moderation_byllm"),
+		Service:           tea.String(t.Service),
 		ServiceParameters: tea.String(string(serviceParameters)),
 	}
 
 	result, _err := t.client.TextModerationPlus(&request)
 	if _err != nil {
 		logger.Error("识别失败", zap.Error(_err))
-		return
+		return nil
 	}
 
 	if *result.StatusCode != http.StatusOK {
 		logger.Error(fmt.Sprintf("response not success. status:%d\n", *result.StatusCode))
-		return
+		return nil
 	}
 	body := result.Body
 	logger.Info(
@@ -51,11 +52,12 @@ func (t *Text) Invoke() {
 	)
 	if *body.Code != http.StatusOK {
 		logger.Error(fmt.Sprintf("text moderation not success. code:%d\n", *body.Code))
-		return
+		return nil
 	}
 
 	data := body.Data
 	logger.Info("text moderation data:", logger.Any("data", *data))
+	return data
 }
 
 func (t *Text) SetClient(client *green20220302.Client) {

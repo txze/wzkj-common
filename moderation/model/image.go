@@ -16,9 +16,10 @@ import (
 type Image struct {
 	client  *green20220302.Client
 	content string
+	Service string
 }
 
-func (i *Image) Invoke() {
+func (i *Image) Invoke() *green20220302.ImageBatchModerationResponseBodyData {
 	serviceParameters, _ := json.Marshal(
 		map[string]interface{}{
 			//待检测图片链接，公网可访问的URL。
@@ -29,19 +30,19 @@ func (i *Image) Invoke() {
 	)
 
 	request := green20220302.ImageBatchModerationRequest{
-		Service:           tea.String("baselineCheck,tonalityImprove"),
+		Service:           tea.String(i.Service),
 		ServiceParameters: tea.String(string(serviceParameters)),
 	}
 
 	result, _err := i.client.ImageBatchModeration(&request)
 	if _err != nil {
 		logger.Error("识别失败", zap.Error(_err))
-		return
+		return nil
 	}
 
 	if *result.StatusCode != http.StatusOK {
 		logger.Error(fmt.Sprintf("response not success. status:%d\n", *result.StatusCode))
-		return
+		return nil
 	}
 	body := result.Body
 	logger.Info(
@@ -51,11 +52,12 @@ func (i *Image) Invoke() {
 	)
 	if *body.Code != http.StatusOK {
 		logger.Error(fmt.Sprintf("Image moderation not success. code:%d\n", *body.Code))
-		return
+		return nil
 	}
 
 	data := body.Data
 	logger.Info("Image moderation data:", logger.Any("data", *data))
+	return data
 }
 
 func (t *Image) SetClient(client *green20220302.Client) {
