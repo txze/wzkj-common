@@ -15,8 +15,8 @@ func TestModerationContext_QueryModeration(t *testing.T) {
 	t.Run("TestModerationContext_QueryModerationByNumber", func(t *testing.T) {
 		logger.Init("./logs")
 		NewModerationClient(context.Background(), Config{
-			AccessKeyId:     "xxxxxx",
-			AccessKeySecret: "xxxxxx",
+			AccessKeyId:     "xxxx",
+			AccessKeySecret: "xxxx",
 			RegionId:        "cn-shanghai",
 			Endpoint:        "green-cip.cn-shanghai.aliyuncs.com",
 		})
@@ -26,14 +26,16 @@ func TestModerationContext_QueryModeration(t *testing.T) {
 		}
 
 		moderation := NewModeration[*green20220302.ImageBatchModerationResponseBodyData](ModerationClient)
-		moderation.SetStrategy(&model.Image{})
-		moderation.Invoke(
+		moderation.SetStrategy(&model.Image{
+			Service: "baselineCheck,tonalityImprove",
+		})
+		rsp := moderation.Invoke(
 			"https://gunpladata.oss-cn-guangzhou.aliyuncs.com/yourBasePath/uploads/2025-08-01/1757513458699.jpg",
 		)
 		//if err != nil {
 		//	t.Errorf("QueryModerationByNumber() error = %v", err)
 		//	return
 		//}
-		//t.Log(got)
+		t.Log(rsp)
 	})
 }
