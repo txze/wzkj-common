@@ -7,6 +7,7 @@ import (
 
 	green20220302 "github.com/alibabacloud-go/green-20220302/v2/client"
 	"github.com/alibabacloud-go/tea/tea"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 
 	"github.com/txze/wzkj-common/logger"
@@ -25,6 +26,7 @@ func (t *Text) Invoke() *green20220302.TextModerationPlusResponseBodyData {
 	serviceParameters, _ := json.Marshal(
 		map[string]interface{}{
 			"content": t.content,
+			"dataId":  uuid.New(),
 		},
 	)
 
