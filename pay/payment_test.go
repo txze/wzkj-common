@@ -1,13 +1,11 @@
 package pay
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/txze/wzkj-common/pay/bank"
-	"github.com/txze/wzkj-common/pay/common"
+	"github.com/txze/wzkj-common/pay/allinpay"
+	"github.com/txze/wzkj-common/pay/config"
 )
 
 const privateKey = `-----BEGIN PRIVATE KEY-----
@@ -52,41 +50,32 @@ AQIDAQAB
 func TestNewPayment(t *testing.T) {
 	t.Run("payment", func(t *testing.T) {
 		//初始化支付
-		pay := NewPayment[bank.ConfigBank, map[string]string, bank.PayResponse]()
-		//设置支付方式
-		pay.SetStrategy(&bank.Pay{})
-		//设置支付配置信息
-		pay.SetConfig(bank.ConfigBank{
-			Common: common.PaymentCommonConfig{
-				NotifyURL:     "www.baidu.com",
-				SyncReturnURL: "www.baidu.com",
-			},
+		pay := NewPayment[allinpay.PayRequest, allinpay.Notify, allinpay.PayResponse]().SetStrategy(allinpay.NewAllInPay(&config.AllInPayConfig{
+			AppId:      "123",
+			CuSID:      "123",
+			APIVersion: "123",
 			PrivateKey: privateKey,
 			PublicKey:  publicKey,
-			MchntID:    "1111",
+		}))
+		rs, err := pay.Pay(&allinpay.PayRequest{
+			TrxAmt:    100,
+			Reqsn:     time.Now().String(),
+			Validtime: time.Now().Add(time.Second * 3).Format(time.DateTime),
+			NotifyUrl: "www.baidu.com",
+			Body:      "你好吗？",
+			Remark:    "我很好",
 		})
-		params := map[string]string{
-			"mchntId":    "123456",
-			"storeId":    "123",
-			"goodsName":  "手机",
-			"outOrderNo": fmt.Sprintf("%d", time.Now().UnixNano()),
-			"transAmt":   "120.00",
-			"paySource":  "微信",
-			"serProId":   "1",
-			"subOpenId":  "xxxssss111",
-			"payType":    "1",
-		}
-		rsp, err := pay.Process(params)
 		if err != nil {
-			t.Errorf("Payment Process = %v", err)
+			t.Error(err)
 			return
 		}
-		t.Log(rsp)
+		t.Log(rs)
 
-		data, _ := json.Marshal(params)
-		if ok, err := pay.Notify(string(data)); !ok {
-			t.Errorf("Payment Notify = %v", err)
+		isSign, err := pay.VerifySign(rs.Params, rs.Sign)
+		if err != nil {
+			t.Error(err)
 			return
 		}
+		t.Log(isSign)
 	})
 }
