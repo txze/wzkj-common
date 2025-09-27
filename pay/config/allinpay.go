@@ -8,6 +8,7 @@ type AllInPayConfig struct {
 	PublicKey     string
 	NotifyUrl     string
 	QueryOrderUrl string
+	CloseOrderUrl string
 }
 
 func (a *AllInPayConfig) GetType() string {

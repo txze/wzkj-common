@@ -21,12 +21,21 @@ type AllInPay struct {
 	config *config.AllInPayConfig
 }
 
+type CloseResponse struct {
+	CusID     string `json:"cusid" `     // 商户号 - 平台分配的商户号(15位)
+	AppID     string `json:"appid" `     // 应用ID - 平台分配的APPID(8位)
+	TrxStatus string `json:"trxstatus" ` // 交易状态 - 交易的状态(4位)
+	RandomStr string `json:"randomstr"`  // 随机字符串 - 随机生成的字符串(32位)
+	ErrMsg    string `json:"errmsg" `    // 错误原因 - 失败的原因说明(100位)
+	Sign      string `json:"sign" `      // 签名(32位)
+}
+
 type Notify struct {
 	AppID       string `json:"appid"`       // 收银宝APPID
 	OutTrxID    string `json:"outtrxid"`    // 第三方交易号(暂未启用)
 	TrxCode     string `json:"trxcode"`     // 交易类型
 	TrxID       string `json:"trxid"`       // 收银宝交易单号
-	InitAmt     string `json:"initamt"`     // 原始下单金额
+	InitAmt     int64  `json:"initamt"`     // 原始下单金额
 	TrxAmt      int64  `json:"trxamt"`      // 交易金额(单位：分)
 	TrxDate     string `json:"trxdate"`     // 交易请求日期(yyyymmdd)
 	PayTime     string `json:"paytime"`     // 交易完成时间(yyyymmddhhmmss)
@@ -63,9 +72,35 @@ type PayRequest struct {
 	Remark    string `json:"remark"`
 }
 
-type PayResponse struct {
-	Retcode string  `json:"retcode"`
-	Retmsg  *Notify `json:"retmsg"`
+type QueryResponse struct {
+	// 通信标识
+	RetCode string `json:"retcode" xml:"retcode"` // 返回码 SUCCESS/FAIL
+	RetMsg  string `json:"retmsg" xml:"retmsg"`   // 返回码说明
+
+	// 业务字段 (仅当RetCode为SUCCESS时返回)
+	CusID      string `json:"cusid"`      // 商户号
+	AppID      string `json:"appid"`      // 应用ID
+	TrxID      string `json:"trxid"`      // 平台交易单号
+	ChnlTrxID  string `json:"chnltrxid"`  // 支付渠道交易单号
+	ReqSn      string `json:"reqsn"`      // 商户订单号
+	TrxCode    string `json:"trxcode"`    // 交易类型
+	TrxAmt     int64  `json:"trxamt"`     // 交易金额(分)
+	TrxStatus  string `json:"trxstatus"`  // 交易状态
+	Acct       string `json:"acct"`       // 支付平台用户标识
+	FinTime    string `json:"fintime"`    // 交易完成时间 yyyyMMddHHmmss
+	RandomStr  string `json:"randomstr"`  // 随机字符串
+	ErrMsg     string `json:"errmsg"`     // 错误原因
+	CmID       string `json:"cmid" `      // 渠道子商户号
+	ChnlID     string `json:"chnlid"`     // 渠道号
+	InitAmt    int64  `json:"initamt"`    // 原交易金额(分)
+	Fee        int64  `json:"fee" `       // 手续费(分)
+	ChnlData   string `json:"chnldata" `  // 渠道信息
+	AcctType   string `json:"accttype" `  // 借贷标识
+	BankCode   string `json:"bankcode" `  // 所属银行
+	LogonID    string `json:"logonid" `   // 买家账号
+	TlOpenID   string `json:"tlopenid" `  // 通联渠道侧OPENID
+	TrxReserve string `json:"trxreserve"` // 交易备注
+	Sign       string `json:"sign" `      // 签名
 }
 
 func NewAllInPay(cfg config.PaymentConfig) *AllInPay {
@@ -98,7 +133,7 @@ func (a *AllInPay) Pay(request *PayRequest) (map[string]interface{}, error) {
 	return params, nil
 }
 
-func (a *AllInPay) QueryPayment(orderID string) (*PayResponse, error) {
+func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	params := make(map[string]interface{})
 	params["cusid"] = a.config.CuSID
 	params["appid"] = a.config.AppId
@@ -106,14 +141,44 @@ func (a *AllInPay) QueryPayment(orderID string) (*PayResponse, error) {
 	params["reqsn"] = orderID
 	params["signtype"] = "RSA"
 	params["randomstr"] = common.RandomString32Custom()
+	params["sign"], _ = a.GenerateSign(params)
 	rspStr, err := common.Execute(a.config.QueryOrderUrl, params)
 	if err != nil {
 		return nil, err
 	}
-	var rsp *PayResponse
+	var rsp *QueryResponse
 	_ = json.Unmarshal([]byte(rspStr), &rsp)
+	var checkSign = make(map[string]interface{})
+	v := reflect.ValueOf(rsp)
+	t := reflect.TypeOf(rsp)
+	var sign string
+	for i := 0; i < v.NumField(); i++ {
+		if t.Name() == "sign" {
+			sign = v.Field(i).String()
+			continue
+		}
+		checkSign[t.Name()] = v.Field(i).Interface()
+	}
 
-	return rsp, nil
+	isCheck, err := a.VerifySign(checkSign, sign)
+	if err != nil {
+		return nil, err
+	}
+
+	if isCheck == false {
+		return nil, errors.New("sign is invalid")
+	}
+
+	return &common.UnifiedResponse{
+		Platform:   a.GetType(),
+		OrderID:    rsp.ReqSn,
+		PlatformID: rsp.ChnlTrxID,
+		Amount:     rsp.InitAmt,
+		Status:     rsp.TrxStatus,
+		PaidAmount: rsp.TrxAmt,
+		PaidTime:   rsp.FinTime,
+		Message:    rsp,
+	}, nil
 }
 
 func (a *AllInPay) Refund(orderID string, amount float64) error {
@@ -203,7 +268,7 @@ func (a *AllInPay) VerifySign(params map[string]interface{}, sign string) (bool,
 	return true, nil
 }
 
-func (a *AllInPay) VerifyNotification(notification *Notify) (bool, error) {
+func (a *AllInPay) VerifyNotification(notification *Notify) (*common.UnifiedResponse, error) {
 	var params = make(map[string]interface{})
 	v := reflect.ValueOf(notification)
 	t := reflect.TypeOf(notification)
@@ -215,9 +280,67 @@ func (a *AllInPay) VerifyNotification(notification *Notify) (bool, error) {
 		}
 		params[t.Name()] = v.Field(i).Interface()
 	}
-	return a.VerifySign(params, sign)
+
+	isCheck, err := a.VerifySign(params, sign)
+	if err != nil {
+		return nil, err
+	}
+
+	if isCheck == false {
+		return nil, errors.New("sign is invalid")
+	}
+
+	return &common.UnifiedResponse{
+		Platform:   a.GetType(),
+		OrderID:    notification.CusOrderID,
+		PlatformID: notification.ChnlTrxID,
+		Amount:     notification.InitAmt,
+		Status:     notification.TrxStatus,
+		PaidAmount: notification.TrxAmt,
+		PaidTime:   notification.PayTime,
+		Message:    notification,
+	}, nil
 }
 
+func (a *AllInPay) Close(orderId string) (bool, error) {
+	params := make(map[string]interface{})
+	params["cusid"] = a.config.CuSID
+	params["appid"] = a.config.AppId
+	params["version"] = 12
+	params["oldreqsn"] = orderId
+	params["signtype"] = "RSA"
+	params["randomstr"] = common.RandomString32Custom()
+	params["sign"], _ = a.GenerateSign(params)
+	rspStr, err := common.Execute(a.config.CloseOrderUrl, params)
+	if err != nil {
+		return false, err
+	}
+
+	var rsp *CloseResponse
+	_ = json.Unmarshal([]byte(rspStr), &rsp)
+	var checkSign = make(map[string]interface{})
+	v := reflect.ValueOf(rsp)
+	t := reflect.TypeOf(rsp)
+	var sign string
+	for i := 0; i < v.NumField(); i++ {
+		if t.Name() == "sign" {
+			sign = v.Field(i).String()
+			continue
+		}
+		checkSign[t.Name()] = v.Field(i).Interface()
+	}
+
+	isCheck, err := a.VerifySign(checkSign, sign)
+	if err != nil {
+		return false, err
+	}
+
+	if isCheck == false {
+		return false, errors.New("sign is invalid")
+	}
+
+	return rsp.TrxStatus == "0000", nil
+}
 func (a *AllInPay) GetType() string {
 	return a.config.GetType()
 }
