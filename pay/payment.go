@@ -1,16 +1,20 @@
 package pay
 
-import "github.com/txze/wzkj-common/pay/common"
+import (
+	"net/http"
+
+	"github.com/txze/wzkj-common/pay/common"
+)
 
 // PaymentStrategy 支付策略接口
 // RQ 参数
 // RS 返回
-type PaymentStrategy[RQ, Notify any] interface {
+type PaymentStrategy[T any] interface {
 	// Pay 发起支付
-	Pay(request *RQ) (map[string]interface{}, error)
+	Pay(request *T) (map[string]interface{}, error)
 
 	// VerifyNotification 验证支付通知
-	VerifyNotification(notification *Notify) (*common.UnifiedResponse, error)
+	VerifyNotification(req *http.Request) (*common.UnifiedResponse, error)
 
 	// QueryPayment 查询支付状态
 	QueryPayment(orderID string) (*common.UnifiedResponse, error)
@@ -22,7 +26,7 @@ type PaymentStrategy[RQ, Notify any] interface {
 	GenerateSign(params map[string]interface{}) (string, error)
 
 	// VerifySign 验证签名
-	VerifySign(params map[string]interface{}, sign string) (bool, error)
+	VerifySign(params map[string]interface{}) (bool, error)
 
 	Close(orderId string) (bool, error)
 
@@ -30,14 +34,14 @@ type PaymentStrategy[RQ, Notify any] interface {
 	GetType() string
 }
 
-type Payment[RQ, Notify any] struct {
+type Payment[T any] struct {
 }
 
-func NewPayment[RQ, Notify any]() *Payment[RQ, Notify] {
-	return &Payment[RQ, Notify]{}
+func NewPayment[T any]() *Payment[T] {
+	return &Payment[T]{}
 }
 
-func (p *Payment[RQ, Notify]) SetStrategy(strategy PaymentStrategy[RQ, Notify]) PaymentStrategy[RQ, Notify] {
+func (p *Payment[T]) SetStrategy(strategy PaymentStrategy[T]) PaymentStrategy[T] {
 	if strategy == nil {
 		return nil
 	}

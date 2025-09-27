@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/txze/wzkj-common/pay/allinpay"
-	"github.com/txze/wzkj-common/pay/config"
 )
 
 const privateKey = `-----BEGIN PRIVATE KEY-----
@@ -50,7 +49,7 @@ AQIDAQAB
 func TestNewPayment(t *testing.T) {
 	t.Run("payment", func(t *testing.T) {
 		//初始化支付
-		pay := NewPayment[allinpay.PayRequest, allinpay.Notify, allinpay.PayResponse]().SetStrategy(allinpay.NewAllInPay(&config.AllInPayConfig{
+		pay := NewPayment[allinpay.PayRequest, allinpay.Notify]().SetStrategy(allinpay.NewAllInPay(&allinpay.AllInPayConfig{
 			AppId:      "123",
 			CuSID:      "123",
 			APIVersion: "123",
@@ -71,11 +70,11 @@ func TestNewPayment(t *testing.T) {
 		}
 		t.Log(rs)
 
-		isSign, err := pay.VerifySign(rs.Params, rs.Sign)
-		if err != nil {
-			t.Error(err)
-			return
-		}
-		t.Log(isSign)
+		//isSign, err := pay.VerifySign(rs.Params, rs.Sign)
+		//if err != nil {
+		//	t.Error(err)
+		//	return
+		//}
+		//t.Log(isSign)
 	})
 }

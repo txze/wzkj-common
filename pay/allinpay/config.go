@@ -1,4 +1,4 @@
-package config
+package allinpay
 
 type AllInPayConfig struct {
 	AppId         string
