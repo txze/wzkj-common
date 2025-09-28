@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
@@ -50,8 +49,8 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	rsp["partnerId"] = w.config.Mchid
 	rsp["prepayId"] = wxRsp.Response.PrepayId
 	rsp["packageValue"] = w.config.PackageValue
-	rsp["nonceStr"] = common.RandomString32Custom()
-	rsp["timeStamp"] = time.Now().Unix()
+	rsp["nonceStr"] = wxRsp.SignInfo.HeaderNonce
+	rsp["timeStamp"] = wxRsp.SignInfo.HeaderTimestamp
 	rsp["sign"] = wxRsp.SignInfo.HeaderSignature
 
 	return rsp, err
