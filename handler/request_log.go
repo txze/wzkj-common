@@ -77,6 +77,7 @@ func UserAgentMiddleware() gin.HandlerFunc {
 			logger.String("userAgent", ua),
 			logger.Bool("isSoftware", isSoftware),
 			logger.Any("params", params),
+			logger.Any("headrs", c.Request.Header),
 		)
 
 		c.Next()
