@@ -52,7 +52,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	rsp["packageValue"] = w.config.PackageValue
 	rsp["nonceStr"] = common.RandomString32Custom()
 	rsp["timeStamp"] = time.Now().Unix()
-	rsp["sign"] = wxRsp.SignInfo.SignBody
+	rsp["sign"] = wxRsp.SignInfo.HeaderSignature
 
 	return rsp, err
 }
