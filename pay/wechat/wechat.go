@@ -53,9 +53,10 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	rsp["appId"] = appPamrams.Appid
 	rsp["partnerId"] = appPamrams.Partnerid
 	rsp["prepayId"] = appPamrams.Prepayid
-	rsp["packageValue"] = w.config.PackageValue
+	rsp["packageValue"] = appPamrams.Package
 	rsp["nonceStr"] = appPamrams.Noncestr
 	rsp["sign"] = appPamrams.Sign
+	rsp["timestamp"] = appPamrams.Timestamp
 
 	return rsp, err
 }
