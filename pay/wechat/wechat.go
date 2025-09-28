@@ -2,12 +2,12 @@ package wechat
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
-	"github.com/go-pay/xlog"
 
 	"github.com/txze/wzkj-common/pay/common"
 )
@@ -35,7 +35,9 @@ func (w *Wechat) Pay(request *PaymentRequest) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	xlog.Debug("Response：", wxRsp)
+	if wxRsp.Code != 0 {
+		return nil, errors.New(wxRsp.Error)
+	}
 	rsp := make(map[string]interface{})
 	rsp["appId"] = w.config.AppId
 	rsp["partnerId"] = w.config.Mchid
@@ -45,7 +47,7 @@ func (w *Wechat) Pay(request *PaymentRequest) (map[string]interface{}, error) {
 	rsp["timeStamp"] = time.Now().Unix()
 	rsp["sign"] = wxRsp.SignInfo.SignBody
 
-	return nil, err
+	return rsp, err
 }
 
 func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse, error) {
