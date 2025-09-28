@@ -67,12 +67,6 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		return nil, err
 	}
 
-	wxPublicKeyMap := w.client.WxPublicKeyMap()
-	err = notifyRsp.VerifySignByPKMap(wxPublicKeyMap)
-	if err != nil {
-		return nil, err
-	}
-
 	result, err := notifyRsp.DecryptPayCipherText(w.config.ApiV3Key)
 	if err != nil {
 		return nil, err
