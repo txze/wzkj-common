@@ -67,7 +67,7 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		return nil, err
 	}
 
-	result, err := notifyRsp.DecryptPayCipherText(w.config.ApiV3Key)
+	result, err := notifyRsp.DecryptPayCipherText(string(w.client.ApiV3Key))
 	if err != nil {
 		return nil, err
 	}
