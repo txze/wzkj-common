@@ -1,6 +1,7 @@
 package pay
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/txze/wzkj-common/pay/common"
@@ -9,9 +10,9 @@ import (
 // PaymentStrategy 支付策略接口
 // RQ 参数
 // RS 返回
-type PaymentStrategy[T any] interface {
+type PaymentStrategy interface {
 	// Pay 发起支付
-	Pay(request *T) (map[string]interface{}, error)
+	Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error)
 
 	// VerifyNotification 验证支付通知
 	VerifyNotification(req *http.Request) (*common.UnifiedResponse, error)
@@ -34,32 +35,17 @@ type PaymentStrategy[T any] interface {
 	GetType() string
 }
 
-type Payment[T any] struct {
+type Payment struct {
 }
 
-func NewPayment[T any]() *Payment[T] {
-	return &Payment[T]{}
+func NewPayment() *Payment {
+	return &Payment{}
 }
 
-func (p *Payment[T]) SetStrategy(strategy PaymentStrategy[T]) PaymentStrategy[T] {
+func (p *Payment) SetStrategy(strategy PaymentStrategy) PaymentStrategy {
 	if strategy == nil {
 		return nil
 	}
 
 	return strategy
 }
-
-//
-//func (p *Payment[RQ, RS]) Process(req RQ) (*RT, error) {
-//	if p.strategy == nil {
-//		return nil, nil
-//	}
-//	return p.strategy.Process(params)
-//}
-//
-//func (p *Payment[CT, PT, RT]) Notify(data string) (bool, error) {
-//	if p.strategy == nil {
-//		return false, nil
-//	}
-//	return p.strategy.Notify(data)
-//}

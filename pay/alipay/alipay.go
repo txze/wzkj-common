@@ -17,7 +17,7 @@ type Alipay struct {
 	config AlipayConfig
 }
 
-func (a *Alipay) Pay(request *PaymentRequest) (map[string]interface{}, error) {
+func (a *Alipay) Pay(request *common.PaymentRequest) (map[string]interface{}, error) {
 	//配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2).
@@ -26,7 +26,7 @@ func (a *Alipay) Pay(request *PaymentRequest) (map[string]interface{}, error) {
 	//请求参数
 	bm := make(gopay.BodyMap)
 	bm.Set("subject", "测试APP支付")
-	bm.Set("out_trade_no", request.OrderId)
+	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", request.Amount)
 	//手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(context.Background(), bm)
@@ -129,7 +129,7 @@ func (a *Alipay) Close(orderId string) (bool, error) {
 }
 
 func (a *Alipay) GetType() string {
-	return a.config.GetType() + "_app"
+	return a.config.GetType()
 }
 
 func NewAlipay(client *alipay.Client, cfg AlipayConfig) *Alipay {
