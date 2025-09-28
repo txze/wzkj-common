@@ -55,7 +55,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	rsp["nonceStr"] = wxRsp.SignInfo.HeaderNonce
 	timeStamp := strconv.FormatInt(time.Now().Unix(), 10)
 	rsp["timeStamp"] = timeStamp
-	rsp["sign"] = we.GetAppPaySign(w.config.AppId, w.config.Mchid, wxRsp.SignInfo.HeaderNonce, wxRsp.Response.PrepayId, we.SignType_HMAC_SHA256, timeStamp, w.config.ApiV3Key)
+	rsp["sign"] = we.GetAppPaySign(w.config.AppId, w.config.Mchid, wxRsp.SignInfo.HeaderNonce, wxRsp.Response.PrepayId, we.SignType_HMAC_SHA256, timeStamp, viper.GetString("wechat.pay.privateKey"))
 
 	return rsp, err
 }
