@@ -4,11 +4,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/go-pay/gopay"
-	we "github.com/go-pay/gopay/wechat"
 	"github.com/go-pay/gopay/wechat/v3"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
@@ -47,15 +44,18 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		logger.FromContext(ctx).Error("Wechat Pay Failed", zap.Int("wx_rsp.code", wxRsp.Code))
 		return nil, errors.New(wxRsp.Error)
 	}
+	appPamrams, err := w.client.PaySignOfApp(w.config.AppId, wxRsp.Response.PrepayId)
+	if err != nil {
+		logger.FromContext(ctx).Error("Wechat Pay Failed", zap.Error(err))
+		return nil, err
+	}
 	rsp := make(map[string]interface{})
-	rsp["appId"] = w.config.AppId
-	rsp["partnerId"] = w.config.Mchid
-	rsp["prepayId"] = wxRsp.Response.PrepayId
+	rsp["appId"] = appPamrams.Appid
+	rsp["partnerId"] = appPamrams.Partnerid
+	rsp["prepayId"] = appPamrams.Prepayid
 	rsp["packageValue"] = w.config.PackageValue
-	rsp["nonceStr"] = wxRsp.SignInfo.HeaderNonce
-	timeStamp := strconv.FormatInt(time.Now().Unix(), 10)
-	rsp["timeStamp"] = timeStamp
-	rsp["sign"] = we.GetAppPaySign(w.config.AppId, w.config.Mchid, wxRsp.SignInfo.HeaderNonce, wxRsp.Response.PrepayId, we.SignType_HMAC_SHA256, timeStamp, viper.GetString("wechat.pay.privateKey"))
+	rsp["nonceStr"] = appPamrams.Noncestr
+	rsp["sign"] = appPamrams.Sign
 
 	return rsp, err
 }
