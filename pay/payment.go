@@ -21,7 +21,7 @@ type PaymentStrategy interface {
 	QueryPayment(orderID string) (*common.UnifiedResponse, error)
 
 	// Refund 退款
-	Refund(orderID string, amount float64) error
+	Refund(ctx context.Context, request *common.RefundRequest) error
 
 	// GenerateSign 生成签名
 	GenerateSign(params map[string]interface{}) (string, error)

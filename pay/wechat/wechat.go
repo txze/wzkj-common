@@ -101,7 +101,32 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	}, nil
 }
 
-func (w *Wechat) Refund(orderID string, amount float64) error {
+func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) error {
+	// 初始化 BodyMap
+	bm := make(gopay.BodyMap)
+	// 必填 退款订单号（程序员定义的）
+	bm.Set("out_refund_no", request.OrderNo).
+		// 选填 退款描述
+		Set("reason", request.GoodsName).
+		Set("notify_url", request.NotifyUrl).
+		SetBodyMap("amount", func(bm gopay.BodyMap) {
+			// 退款金额:单位是分
+			bm.Set("refund", request.Amount). //实际退款金额
+								Set("total", request.Amount). // 折扣前总金额（不是实际退款数）
+								Set("currency", "CNY")
+		})
+	refund, err := w.client.V3Refund(ctx, bm)
+	if err != nil {
+		logger.FromContext(ctx).Error("Wechat Refund Failed", zap.Error(err))
+		return err
+	}
+
+	// 将非正常退款异常记录
+	// 返回：404 > {"code":"RESOURCE_NOT_EXISTS","message":"订单不存在"}
+	if refund.Code == 404 || refund.Code == 400 || refund.Code == 403 {
+		logger.FromContext(ctx).Error("Wechat Refund Failed", zap.Any("refund", refund))
+		return errors.New(refund.Error)
+	}
 	return nil
 }
 
