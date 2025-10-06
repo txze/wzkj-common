@@ -2,7 +2,6 @@ package alipay
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -42,7 +41,7 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		return nil, err
 	}
 	rsp := make(map[string]interface{})
-	_ = json.Unmarshal([]byte(payParam), &rsp)
+	rsp["orderStr"] = payParam
 	return rsp, err
 }
 
