@@ -10,8 +10,9 @@ type WechatConfig struct {
 	SerialNo     string //商户API证书的证书序列号
 	PackageValue string //支付
 	ApiV3Key     string //APIv3Key，商户平台获取
+	PrivateKey   string //支付私钥
 	PublicKey    string //支付公钥
-	publicKeyID  string // 支付公钥ID
+	PublicKeyID  string // 支付公钥ID
 }
 
 func (a *WechatConfig) GetType() string {

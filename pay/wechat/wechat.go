@@ -156,13 +156,13 @@ func NewWechat(cfg WechatConfig) (*Wechat, error) {
 	mchid := cfg.Mchid
 	serialNo := cfg.SerialNo
 	apiV3Key := cfg.ApiV3Key
-	privateKey := cfg.PackageValue
+	privateKey := cfg.PrivateKey
 	client, err := wechat.NewClientV3(mchid, serialNo, apiV3Key, privateKey)
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
 
-	err = client.AutoVerifySignByPublicKey([]byte(cfg.PublicKey), cfg.publicKeyID)
+	err = client.AutoVerifySignByPublicKey([]byte(cfg.PublicKey), cfg.PublicKeyID)
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
