@@ -28,7 +28,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		Set("time_expire", request.Expire).
 		Set("notify_url", w.config.NotifyUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
-			bm.Set("total", request.Amount).
+			bm.Set("total", request.Amount*100).
 				Set("currency", request.Currency)
 		})
 
@@ -75,9 +75,9 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		Platform:   w.GetType(),
 		OrderID:    result.OutTradeNo,
 		PlatformID: result.TransactionId,
-		Amount:     result.Amount.Total,
+		Amount:     float64(result.Amount.Total) / 100,
 		Status:     result.TradeState,
-		PaidAmount: result.Amount.PayerTotal,
+		PaidAmount: float64(result.Amount.PayerTotal) / 100,
 		PaidTime:   result.SuccessTime,
 		Message:    result,
 	}, nil
@@ -92,9 +92,9 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		Platform:   w.GetType(),
 		OrderID:    queryOrder.Response.OutTradeNo,
 		PlatformID: queryOrder.Response.TransactionId,
-		Amount:     queryOrder.Response.Amount.Total,
+		Amount:     float64(queryOrder.Response.Amount.Total) / 100,
 		Status:     queryOrder.Response.TradeState,
-		PaidAmount: queryOrder.Response.Amount.PayerTotal,
+		PaidAmount: float64(queryOrder.Response.Amount.PayerTotal) / 100,
 		PaidTime:   queryOrder.Response.SuccessTime,
 		Message:    queryOrder,
 	}, nil
@@ -110,8 +110,8 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 		Set("notify_url", w.config.RefundUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			// 退款金额:单位是分
-			bm.Set("refund", request.Amount). //实际退款金额
-								Set("total", request.Amount). // 折扣前总金额（不是实际退款数）
+			bm.Set("refund", request.Amount*100). //实际退款金额
+								Set("total", request.Amount*100). // 折扣前总金额（不是实际退款数）
 								Set("currency", "CNY")
 		})
 	refund, err := w.client.V3Refund(ctx, bm)
