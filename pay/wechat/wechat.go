@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
-	"github.com/spf13/viper"
 	"go.uber.org/zap"
 
 	"github.com/txze/wzkj-common/logger"
@@ -154,16 +153,16 @@ func (w *Wechat) GetType() string {
 }
 
 func NewWechat(cfg WechatConfig) (*Wechat, error) {
-	mchid := viper.GetString("wechat.pay.mch_id")
-	serialNo := viper.GetString("wechat.pay.serialNo")
-	apiV3Key := viper.GetString("wechat.pay.apiV3Key")
-	privateKey := viper.GetString("wechat.pay.privateKey")
+	mchid := cfg.Mchid
+	serialNo := cfg.SerialNo
+	apiV3Key := cfg.ApiV3Key
+	privateKey := cfg.PackageValue
 	client, err := wechat.NewClientV3(mchid, serialNo, apiV3Key, privateKey)
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
 
-	err = client.AutoVerifySignByPublicKey([]byte(viper.GetString("wechat.pay.PUB_KEY")), viper.GetString("wechat.pay.PUB_KEY_ID"))
+	err = client.AutoVerifySignByPublicKey([]byte(cfg.PublicKey), cfg.publicKeyID)
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}

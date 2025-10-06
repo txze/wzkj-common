@@ -25,7 +25,7 @@ func (a *Alipay) Pay(request *common.PaymentRequest) (map[string]interface{}, er
 
 	//请求参数
 	bm := make(gopay.BodyMap)
-	bm.Set("subject", "测试APP支付")
+	bm.Set("subject", request.GoodsName)
 	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", request.Amount)
 	//手机APP支付参数请求
@@ -132,7 +132,11 @@ func (a *Alipay) GetType() string {
 	return a.config.GetType()
 }
 
-func NewAlipay(client *alipay.Client, cfg AlipayConfig) *Alipay {
+func NewAlipay(cfg AlipayConfig) *Alipay {
+	client, err := alipay.NewClient(cfg.Appid, cfg.PrivateKey, cfg.IsProd)
+	if err != nil {
+		panic(err)
+	}
 	return &Alipay{
 		client: client,
 		config: cfg,
