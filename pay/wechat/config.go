@@ -13,6 +13,8 @@ type WechatConfig struct {
 	PrivateKey   string //支付私钥
 	PublicKey    string //支付公钥
 	PublicKeyID  string // 支付公钥ID
+	NotifyUrl    string // 支付回调URL
+	RefundUrl    string // 退款通知URL
 }
 
 func (a *WechatConfig) GetType() string {

@@ -26,7 +26,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		Set("description", request.GoodsName).
 		Set("out_trade_no", request.OrderNo).
 		Set("time_expire", request.Expire).
-		Set("notify_url", request.NotifyUrl).
+		Set("notify_url", w.config.NotifyUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			bm.Set("total", request.Amount).
 				Set("currency", request.Currency)

@@ -2,6 +2,7 @@ package alipay
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -9,7 +10,9 @@ import (
 	"github.com/go-pay/gopay/alipay"
 	"github.com/pkg/errors"
 
+	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
+	"github.com/txze/wzkj-common/pkg/ierr"
 )
 
 type Alipay struct {
@@ -17,11 +20,15 @@ type Alipay struct {
 	config AlipayConfig
 }
 
-func (a *Alipay) Pay(request *common.PaymentRequest) (map[string]interface{}, error) {
+func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) error {
+	return nil
+}
+
+func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
 	//配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2).
-		SetNotifyUrl(request.NotifyUrl)
+		SetNotifyUrl(a.config.NotifyUrl)
 
 	//请求参数
 	bm := make(gopay.BodyMap)
@@ -31,10 +38,11 @@ func (a *Alipay) Pay(request *common.PaymentRequest) (map[string]interface{}, er
 	//手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(context.Background(), bm)
 	if err != nil {
+		logger.FromContext(ctx).Error("alipay error: " + err.Error())
 		return nil, err
 	}
 	rsp := make(map[string]interface{})
-	rsp["payParam"] = payParam
+	_ = json.Unmarshal([]byte(payParam), &rsp)
 	return rsp, err
 }
 
@@ -89,11 +97,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	}, nil
 }
 
-func (a Alipay) Refund(orderID string, amount float64) error {
-	return nil
-}
-
-func (a Alipay) GenerateSign(params map[string]interface{}) (string, error) {
+func (a *Alipay) GenerateSign(params map[string]interface{}) (string, error) {
 	return "", nil
 }
 
@@ -132,13 +136,13 @@ func (a *Alipay) GetType() string {
 	return a.config.GetType()
 }
 
-func NewAlipay(cfg AlipayConfig) *Alipay {
+func NewAlipay(cfg AlipayConfig) (*Alipay, error) {
 	client, err := alipay.NewClient(cfg.Appid, cfg.PrivateKey, cfg.IsProd)
 	if err != nil {
-		panic(err)
+		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
 	return &Alipay{
 		client: client,
 		config: cfg,
-	}
+	}, nil
 }
