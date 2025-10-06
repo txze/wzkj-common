@@ -62,7 +62,7 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		OrderID:    bm.GetString("out_trade_no"),
 		PlatformID: bm.GetString("trade_no"),
 		Amount:     totalAmount,
-		Status:     bm.GetString("trade_status"),
+		Status:     bm.GetString("trade_status") == "TRADE_SUCCESS",
 		PaidAmount: buyerPayAmount,
 		PaidTime:   bm.GetString("gmt_payment"),
 		Message:    bm,
@@ -77,11 +77,12 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	//查询订单
 	aliRsp, err := a.client.TradeQuery(context.Background(), bm)
 	if err != nil {
+		if bizErr, ok := alipay.IsBizError(err); ok {
+			return nil, bizErr
+		}
 		return nil, err
 	}
-	if aliRsp.Response.Code != "10000" {
-		return nil, errors.New(aliRsp.Response.Msg)
-	}
+
 	totalAmount, _ := strconv.ParseFloat(aliRsp.Response.TotalAmount, 64)
 	buyerPayAmount, _ := strconv.ParseFloat(aliRsp.Response.BuyerPayAmount, 64)
 	return &common.UnifiedResponse{
@@ -89,7 +90,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		OrderID:    aliRsp.Response.OutTradeNo,
 		PlatformID: aliRsp.Response.TradeNo,
 		Amount:     totalAmount,
-		Status:     aliRsp.Response.TradeStatus,
+		Status:     aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
 		PaidAmount: buyerPayAmount,
 		PaidTime:   aliRsp.Response.SendPayDate,
 		Message:    aliRsp,

@@ -13,7 +13,7 @@ type UnifiedResponse struct {
 	OrderID    string  `json:"order_id"`    // 商户订单号
 	PlatformID string  `json:"platform_id"` // 平台订单号
 	Amount     float64 `json:"amount"`      // 订单金额
-	Status     string  `json:"status"`      // 支付状态
+	Status     bool    `json:"status"`      // 支付状态是否成功
 	PaidAmount float64 `json:"paid_amount"` // 实付金额
 	PaidTime   string  `json:"paid_time"`   // 支付时间
 	Message    any     `json:"message"`     // 返回消息
