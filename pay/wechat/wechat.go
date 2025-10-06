@@ -72,14 +72,15 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	}
 
 	return &common.UnifiedResponse{
-		Platform:   w.GetType(),
-		OrderID:    result.OutTradeNo,
-		PlatformID: result.TransactionId,
-		Amount:     float64(result.Amount.Total) / 100,
-		Status:     result.TradeState,
-		PaidAmount: float64(result.Amount.PayerTotal) / 100,
-		PaidTime:   result.SuccessTime,
-		Message:    result,
+		Platform:    w.GetType(),
+		OrderID:     result.OutTradeNo,
+		PlatformID:  result.TransactionId,
+		Amount:      float64(result.Amount.Total) / 100,
+		Status:      result.TradeState == gopay.SUCCESS,
+		TradeStatus: result.TradeState,
+		PaidAmount:  float64(result.Amount.PayerTotal) / 100,
+		PaidTime:    result.SuccessTime,
+		Message:     result,
 	}, nil
 }
 
@@ -89,14 +90,15 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		return nil, err
 	}
 	return &common.UnifiedResponse{
-		Platform:   w.GetType(),
-		OrderID:    queryOrder.Response.OutTradeNo,
-		PlatformID: queryOrder.Response.TransactionId,
-		Amount:     float64(queryOrder.Response.Amount.Total) / 100,
-		Status:     queryOrder.Response.TradeState,
-		PaidAmount: float64(queryOrder.Response.Amount.PayerTotal) / 100,
-		PaidTime:   queryOrder.Response.SuccessTime,
-		Message:    queryOrder,
+		Platform:    w.GetType(),
+		OrderID:     queryOrder.Response.OutTradeNo,
+		PlatformID:  queryOrder.Response.TransactionId,
+		Amount:      float64(queryOrder.Response.Amount.Total) / 100,
+		Status:      queryOrder.Response.TradeState == gopay.SUCCESS,
+		TradeStatus: queryOrder.Response.TradeState,
+		PaidAmount:  float64(queryOrder.Response.Amount.PayerTotal) / 100,
+		PaidTime:    queryOrder.Response.SuccessTime,
+		Message:     queryOrder,
 	}, nil
 }
 

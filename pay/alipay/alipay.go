@@ -58,14 +58,15 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	totalAmount, _ := strconv.ParseFloat(bm.GetString("total_amount"), 64)
 	buyerPayAmount, _ := strconv.ParseFloat(bm.GetString("buyer_pay_amount"), 64)
 	return &common.UnifiedResponse{
-		Platform:   a.GetType(),
-		OrderID:    bm.GetString("out_trade_no"),
-		PlatformID: bm.GetString("trade_no"),
-		Amount:     totalAmount,
-		Status:     bm.GetString("trade_status") == "TRADE_SUCCESS",
-		PaidAmount: buyerPayAmount,
-		PaidTime:   bm.GetString("gmt_payment"),
-		Message:    bm,
+		Platform:    a.GetType(),
+		OrderID:     bm.GetString("out_trade_no"),
+		PlatformID:  bm.GetString("trade_no"),
+		Amount:      totalAmount,
+		Status:      bm.GetString("trade_status") == "TRADE_SUCCESS",
+		TradeStatus: bm.GetString("trade_status"),
+		PaidAmount:  buyerPayAmount,
+		PaidTime:    bm.GetString("gmt_payment"),
+		Message:     bm,
 	}, nil
 }
 
@@ -86,14 +87,15 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	totalAmount, _ := strconv.ParseFloat(aliRsp.Response.TotalAmount, 64)
 	buyerPayAmount, _ := strconv.ParseFloat(aliRsp.Response.BuyerPayAmount, 64)
 	return &common.UnifiedResponse{
-		Platform:   a.GetType(),
-		OrderID:    aliRsp.Response.OutTradeNo,
-		PlatformID: aliRsp.Response.TradeNo,
-		Amount:     totalAmount,
-		Status:     aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
-		PaidAmount: buyerPayAmount,
-		PaidTime:   aliRsp.Response.SendPayDate,
-		Message:    aliRsp,
+		Platform:    a.GetType(),
+		OrderID:     aliRsp.Response.OutTradeNo,
+		PlatformID:  aliRsp.Response.TradeNo,
+		Amount:      totalAmount,
+		Status:      aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
+		TradeStatus: bm.GetString("trade_status"),
+		PaidAmount:  buyerPayAmount,
+		PaidTime:    aliRsp.Response.SendPayDate,
+		Message:     aliRsp,
 	}, nil
 }
 
