@@ -35,7 +35,7 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", request.Amount)
 	//手机APP支付参数请求
-	payParam, err := a.client.TradeAppPay(context.Background(), bm)
+	payParam, err := a.client.TradePagePay(context.Background(), bm)
 	if err != nil {
 		logger.FromContext(ctx).Error("alipay error: " + err.Error())
 		return nil, err
