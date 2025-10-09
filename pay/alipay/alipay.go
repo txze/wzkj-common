@@ -105,7 +105,7 @@ func (a *Alipay) GenerateSign(params map[string]interface{}) (string, error) {
 
 func (a *Alipay) VerifySign(params map[string]interface{}) (bool, error) {
 	// 验签
-	ok, err := alipay.VerifySign(a.config.AliPayPublicKey, params)
+	ok, err := alipay.VerifySignWithCert(a.config.AliPayPublicCertContent, params)
 	if err != nil {
 		return false, errors.Errorf("alipay.VerifySign err: %s", err.Error())
 	}
