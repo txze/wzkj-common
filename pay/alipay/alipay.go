@@ -143,6 +143,10 @@ func NewAlipay(cfg AlipayConfig) (*Alipay, error) {
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
+	err = client.SetCertSnByContent(cfg.AppCertContent, cfg.AliPayRootCertContent, cfg.AliPayPublicCertContent)
+	if err != nil {
+		return nil, ierr.NewIError(ierr.InternalError, err.Error())
+	}
 	return &Alipay{
 		client: client,
 		config: cfg,
