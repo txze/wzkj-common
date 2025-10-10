@@ -12,7 +12,6 @@ require (
 	github.com/dimiro1/banner v1.1.0
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-pay/gopay v1.5.113
-	github.com/go-pay/xlog v0.0.3
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/gomodule/redigo v2.0.0+incompatible
@@ -22,6 +21,7 @@ require (
 	github.com/mitchellh/mapstructure v1.4.3
 	github.com/pkg/errors v0.9.1
 	github.com/qiniu/qmgo v1.1.9
+	github.com/shopspring/decimal v1.4.0
 	github.com/silenceper/wechat v1.2.6
 	github.com/smartwalle/alipay/v3 v3.2.25
 	github.com/spf13/viper v1.20.1
@@ -62,6 +62,7 @@ require (
 	github.com/go-pay/errgroup v0.0.3 // indirect
 	github.com/go-pay/smap v0.0.2 // indirect
 	github.com/go-pay/util v0.0.4 // indirect
+	github.com/go-pay/xlog v0.0.3 // indirect
 	github.com/go-pay/xtime v0.0.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect

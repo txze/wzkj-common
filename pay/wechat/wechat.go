@@ -9,6 +9,8 @@ import (
 	"github.com/go-pay/gopay/wechat/v3"
 	"go.uber.org/zap"
 
+	"github.com/shopspring/decimal"
+
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pkg/ierr"
@@ -20,6 +22,8 @@ type Wechat struct {
 }
 
 func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
+	v := decimal.NewFromFloat(request.Amount)
+	result := v.Mul(decimal.NewFromInt(100))
 	//初始化参数Map
 	bm := make(gopay.BodyMap)
 	bm.Set("appid", w.config.AppId).
@@ -28,7 +32,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		Set("time_expire", request.Expire).
 		Set("notify_url", w.config.NotifyUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
-			bm.Set("total", int64(request.Amount*100+0.5)).
+			bm.Set("total", result.IntPart()).
 				Set("currency", request.Currency)
 		})
 
