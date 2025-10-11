@@ -1,6 +1,7 @@
 package allinpay
 
 import (
+	"context"
 	"crypto"
 	"crypto/rsa"
 	"crypto/sha1"
@@ -12,6 +13,8 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/go-pay/gopay"
+	"github.com/go-pay/util"
 	"github.com/pkg/errors"
 
 	"github.com/txze/wzkj-common/pay/common"
@@ -41,7 +44,7 @@ func (a *AllInPay) Pay(request *PayRequest) (map[string]interface{}, error) {
 	params["body"] = request.Body
 	params["remark"] = request.Remark
 	params["paytype"] = "A02"
-	params["randomstr"] = common.RandomString32Custom()
+	params["randomstr"] = util.RandomString(32)
 
 	sign, err := a.GenerateSign(params)
 	if err != nil {
@@ -59,7 +62,7 @@ func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error)
 	params["version"] = 12
 	params["reqsn"] = orderID
 	params["signtype"] = "RSA"
-	params["randomstr"] = common.RandomString32Custom()
+	params["randomstr"] = util.RandomString(32)
 	params["sign"], _ = a.GenerateSign(params)
 	rspStr, err := common.Execute(a.config.QueryOrderUrl, params)
 	if err != nil {
@@ -82,22 +85,25 @@ func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error)
 	if isCheck == false {
 		return nil, errors.New("sign is invalid")
 	}
-
+	var status bool
+	if gopay.SUCCESS == rsp.TrxStatus {
+		status = true
+	}
 	return &common.UnifiedResponse{
-		Platform:   a.GetType(),
-		OrderID:    rsp.ReqSn,
-		PlatformID: rsp.ChnlTrxID,
-		Amount:     rsp.InitAmt,
-		Status:     rsp.TrxStatus,
-		PaidAmount: rsp.TrxAmt,
-		PaidTime:   rsp.FinTime,
-		Message:    rsp,
+		Platform:    a.GetType(),
+		OrderID:     rsp.ReqSn,
+		PlatformID:  rsp.ChnlTrxID,
+		Amount:      float64(rsp.InitAmt) / 100,
+		Status:      status,
+		TradeStatus: rsp.TrxStatus,
+		PaidAmount:  float64(rsp.TrxAmt) / 100,
+		PaidTime:    rsp.FinTime,
+		Message:     rsp,
 	}, nil
 }
 
-func (a *AllInPay) Refund(orderID string, amount float64) error {
-	//TODO implement me
-	panic("implement me")
+func (a *AllInPay) Refund(ctx context.Context, request *common.RefundRequest) error {
+	return nil
 }
 
 func (a *AllInPay) GenerateSign(params map[string]interface{}) (string, error) {
@@ -209,11 +215,11 @@ func (a *AllInPay) VerifyNotification(req *http.Request) (*common.UnifiedRespons
 		Platform:   a.GetType(),
 		OrderID:    params["cusorderid"].(string),
 		PlatformID: params["chnltrxid"].(string),
-		Amount:     params["initamt"].(int),
-		Status:     params["trxstatus"].(string),
-		PaidAmount: params["trxamt"].(int),
-		PaidTime:   params["paytime"].(string),
-		Message:    params,
+		//Amount:     params["initamt"].(int),
+		//Status:     params["trxstatus"].(string),
+		//PaidAmount: params["trxamt"].(int),
+		PaidTime: params["paytime"].(string),
+		Message:  params,
 	}, nil
 }
 
@@ -224,7 +230,7 @@ func (a *AllInPay) Close(orderId string) (bool, error) {
 	params["version"] = 12
 	params["oldreqsn"] = orderId
 	params["signtype"] = "RSA"
-	params["randomstr"] = common.RandomString32Custom()
+	params["randomstr"] = util.RandomString(32)
 	params["sign"], _ = a.GenerateSign(params)
 	rspStr, err := common.Execute(a.config.CloseOrderUrl, params)
 	if err != nil {
