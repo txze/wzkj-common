@@ -3,6 +3,7 @@ package wechat
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -112,7 +113,7 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 	bm := make(gopay.BodyMap)
 	// 必填 退款订单号（程序员定义的）
 	bm.
-		Set("out_refund_no", time.Now().UnixNano()).
+		Set("out_refund_no", fmt.Sprintf("%d", time.Now().UnixNano())).
 		Set("out_trade_no", request.OrderNo).
 		// 选填 退款描述
 		Set("reason", request.GoodsName).
