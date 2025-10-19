@@ -20,6 +20,25 @@ type Alipay struct {
 }
 
 func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) error {
+	// 请求参数
+	bm := make(gopay.BodyMap)
+	bm.Set("out_trade_no", request.OrderNo).
+		Set("refund_amount", request.Amount).
+		Set("refund_reason", request.GoodsName)
+
+	// 发起退款请求
+	aliRsp, err := a.client.TradeRefund(ctx, bm)
+	if err != nil {
+		if bizErr, ok := alipay.IsBizError(err); ok {
+			logger.FromContext(ctx).Error("alipay refund ", logger.Any("error", bizErr))
+			// do something
+			return err
+		}
+		return err
+	}
+
+	logger.FromContext(ctx).Info("alipay refund success", logger.Any("data", *aliRsp))
+
 	return nil
 }
 

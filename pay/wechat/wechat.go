@@ -132,6 +132,7 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 		logger.FromContext(ctx).Error("Wechat Refund Failed", zap.Any("refund", refund))
 		return errors.New(refund.Error)
 	}
+	logger.FromContext(ctx).Info("wechat refund success", logger.Any("data", refund))
 	return nil
 }
 
