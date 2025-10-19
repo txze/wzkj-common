@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
@@ -110,7 +111,9 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 	// 初始化 BodyMap
 	bm := make(gopay.BodyMap)
 	// 必填 退款订单号（程序员定义的）
-	bm.Set("out_refund_no", request.OrderNo).
+	bm.
+		Set("out_refund_no", time.Now().UnixNano()).
+		Set("out_trade_no", request.OrderNo).
 		// 选填 退款描述
 		Set("reason", request.GoodsName).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
