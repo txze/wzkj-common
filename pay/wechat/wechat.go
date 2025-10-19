@@ -113,7 +113,6 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 	bm.Set("out_refund_no", request.OrderNo).
 		// 选填 退款描述
 		Set("reason", request.GoodsName).
-		Set("notify_url", w.config.RefundUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			// 退款金额:单位是分
 			bm.Set("refund", request.Amount*100). //实际退款金额
