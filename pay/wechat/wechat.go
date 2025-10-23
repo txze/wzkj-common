@@ -111,6 +111,8 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) error {
 	// 初始化 BodyMap
 	bm := make(gopay.BodyMap)
+	v := decimal.NewFromFloat(request.Amount)
+	resultAmount := v.Mul(decimal.NewFromInt(100))
 	// 必填 退款订单号（程序员定义的）
 	bm.
 		Set("out_refund_no", fmt.Sprintf("%d", time.Now().UnixNano())).
@@ -119,9 +121,9 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 		Set("reason", request.GoodsName).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			// 退款金额:单位是分
-			bm.Set("refund", request.Amount*100). //实际退款金额
-								Set("total", request.Amount*100). // 折扣前总金额（不是实际退款数）
-								Set("currency", "CNY")
+			bm.Set("refund", resultAmount.IntPart()). //实际退款金额
+									Set("total", resultAmount.IntPart()). // 折扣前总金额（不是实际退款数）
+									Set("currency", "CNY")
 		})
 	refund, err := w.client.V3Refund(ctx, bm)
 	if err != nil {
