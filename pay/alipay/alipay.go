@@ -3,11 +3,11 @@ package alipay
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
 	"github.com/pkg/errors"
+	"github.com/shopspring/decimal"
 
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
@@ -43,6 +43,7 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) erro
 }
 
 func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
+	result := decimal.NewFromInt(int64(request.Amount)).Div(decimal.NewFromInt(100))
 	//配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2).
@@ -52,7 +53,7 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm := make(gopay.BodyMap)
 	bm.Set("subject", request.GoodsName)
 	bm.Set("out_trade_no", request.OrderNo)
-	bm.Set("total_amount", request.Amount)
+	bm.Set("total_amount", result.String())
 	//手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(context.Background(), bm)
 	if err != nil {
@@ -74,16 +75,24 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	if err != nil {
 		return nil, err
 	}
-	totalAmount, _ := strconv.ParseFloat(bm.GetString("total_amount"), 64)
-	buyerPayAmount, _ := strconv.ParseFloat(bm.GetString("buyer_pay_amount"), 64)
+	totalAmount, err := decimal.NewFromString(bm.GetString("total_amount"))
+	if err != nil {
+		return nil, err
+	}
+
+	buyerPayAmount, err := decimal.NewFromString(bm.GetString("buyer_pay_amount"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     bm.GetString("out_trade_no"),
 		PlatformID:  bm.GetString("trade_no"),
-		Amount:      totalAmount,
+		Amount:      int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		Status:      bm.GetString("trade_status") == "TRADE_SUCCESS",
 		TradeStatus: bm.GetString("trade_status"),
-		PaidAmount:  buyerPayAmount,
+		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		PaidTime:    bm.GetString("gmt_payment"),
 		Message:     bm,
 	}, nil
@@ -103,16 +112,24 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		return nil, err
 	}
 
-	totalAmount, _ := strconv.ParseFloat(aliRsp.Response.TotalAmount, 64)
-	buyerPayAmount, _ := strconv.ParseFloat(aliRsp.Response.BuyerPayAmount, 64)
+	totalAmount, err := decimal.NewFromString(bm.GetString("total_amount"))
+	if err != nil {
+		return nil, err
+	}
+
+	buyerPayAmount, err := decimal.NewFromString(bm.GetString("buyer_pay_amount"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     aliRsp.Response.OutTradeNo,
 		PlatformID:  aliRsp.Response.TradeNo,
-		Amount:      totalAmount,
+		Amount:      int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		Status:      aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
 		TradeStatus: bm.GetString("trade_status"),
-		PaidAmount:  buyerPayAmount,
+		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		PaidTime:    aliRsp.Response.SendPayDate,
 		Message:     aliRsp,
 	}, nil

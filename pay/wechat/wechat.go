@@ -11,8 +11,6 @@ import (
 	"github.com/go-pay/gopay/wechat/v3"
 	"go.uber.org/zap"
 
-	"github.com/shopspring/decimal"
-
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pkg/ierr"
@@ -24,8 +22,6 @@ type Wechat struct {
 }
 
 func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
-	v := decimal.NewFromFloat(request.Amount)
-	result := v.Mul(decimal.NewFromInt(100))
 	//初始化参数Map
 	bm := make(gopay.BodyMap)
 	bm.Set("appid", w.config.AppId).
@@ -34,7 +30,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		Set("time_expire", request.Expire).
 		Set("notify_url", w.config.NotifyUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
-			bm.Set("total", result.IntPart()).
+			bm.Set("total", request.Amount).
 				Set("currency", request.Currency)
 		})
 
@@ -81,10 +77,10 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		Platform:    w.GetType(),
 		OrderID:     result.OutTradeNo,
 		PlatformID:  result.TransactionId,
-		Amount:      float64(result.Amount.Total) / 100,
+		Amount:      result.Amount.Total,
 		Status:      result.TradeState == gopay.SUCCESS,
 		TradeStatus: result.TradeState,
-		PaidAmount:  float64(result.Amount.PayerTotal) / 100,
+		PaidAmount:  result.Amount.PayerTotal,
 		PaidTime:    result.SuccessTime,
 		Message:     result,
 	}, nil
@@ -99,10 +95,10 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		Platform:    w.GetType(),
 		OrderID:     queryOrder.Response.OutTradeNo,
 		PlatformID:  queryOrder.Response.TransactionId,
-		Amount:      float64(queryOrder.Response.Amount.Total) / 100,
+		Amount:      queryOrder.Response.Amount.Total,
 		Status:      queryOrder.Response.TradeState == gopay.SUCCESS,
 		TradeStatus: queryOrder.Response.TradeState,
-		PaidAmount:  float64(queryOrder.Response.Amount.PayerTotal) / 100,
+		PaidAmount:  queryOrder.Response.Amount.PayerTotal,
 		PaidTime:    queryOrder.Response.SuccessTime,
 		Message:     queryOrder,
 	}, nil
@@ -111,8 +107,6 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) error {
 	// 初始化 BodyMap
 	bm := make(gopay.BodyMap)
-	v := decimal.NewFromFloat(request.Amount)
-	resultAmount := v.Mul(decimal.NewFromInt(100))
 	// 必填 退款订单号（程序员定义的）
 	bm.
 		Set("out_refund_no", fmt.Sprintf("%d", time.Now().UnixNano())).
@@ -121,9 +115,9 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 		Set("reason", request.GoodsName).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			// 退款金额:单位是分
-			bm.Set("refund", resultAmount.IntPart()). //实际退款金额
-									Set("total", resultAmount.IntPart()). // 折扣前总金额（不是实际退款数）
-									Set("currency", "CNY")
+			bm.Set("refund", request.Amount). //实际退款金额
+								Set("total", request.Amount). // 折扣前总金额（不是实际退款数）
+								Set("currency", "CNY")
 		})
 	refund, err := w.client.V3Refund(ctx, bm)
 	if err != nil {
