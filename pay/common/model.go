@@ -6,6 +6,7 @@ type PaymentRequest struct {
 	Amount    int    `json:"amount"`     //支付金额
 	Currency  string `json:"currency"`   //支付货币
 	GoodsName string `json:"goods_name"` //商品名
+	Params    string `json:"params"`     //回传参数
 }
 
 type UnifiedResponse struct {
@@ -18,6 +19,7 @@ type UnifiedResponse struct {
 	PaidAmount  int    `json:"paid_amount"`  // 实付金额
 	PaidTime    string `json:"paid_time"`    // 支付时间
 	Message     any    `json:"message"`      // 返回消息
+	Params      string `json:"params"`       //回传参数
 }
 
 type RefundRequest struct {

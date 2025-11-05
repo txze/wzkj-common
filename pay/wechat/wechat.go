@@ -29,6 +29,7 @@ func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		Set("out_trade_no", request.OrderNo).
 		Set("time_expire", request.Expire).
 		Set("notify_url", w.config.NotifyUrl).
+		Set("attach", request.Params).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			bm.Set("total", request.Amount).
 				Set("currency", request.Currency)
@@ -82,6 +83,7 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		TradeStatus: result.TradeState,
 		PaidAmount:  result.Amount.PayerTotal,
 		PaidTime:    result.SuccessTime,
+		Params:      result.Attach,
 		Message:     result,
 	}, nil
 }

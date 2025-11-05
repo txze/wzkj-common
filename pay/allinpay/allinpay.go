@@ -93,10 +93,10 @@ func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error)
 		Platform:    a.GetType(),
 		OrderID:     rsp.ReqSn,
 		PlatformID:  rsp.ChnlTrxID,
-		Amount:      float64(rsp.InitAmt) / 100,
+		Amount:      rsp.InitAmt,
 		Status:      status,
 		TradeStatus: rsp.TrxStatus,
-		PaidAmount:  float64(rsp.TrxAmt) / 100,
+		PaidAmount:  rsp.TrxAmt,
 		PaidTime:    rsp.FinTime,
 		Message:     rsp,
 	}, nil

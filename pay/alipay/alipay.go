@@ -54,6 +54,7 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm.Set("subject", request.GoodsName)
 	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", result.String())
+	bm.Set("passback_params", request.Params)
 	//手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(context.Background(), bm)
 	if err != nil {
@@ -94,6 +95,7 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		TradeStatus: bm.GetString("trade_status"),
 		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		PaidTime:    bm.GetString("gmt_payment"),
+		Params:      bm.GetString("passback_params"),
 		Message:     bm,
 	}, nil
 }
