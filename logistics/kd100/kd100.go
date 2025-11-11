@@ -10,11 +10,6 @@ import (
 	"strings"
 )
 
-type KD100Config struct {
-	KEY      string
-	CUSTOMER string
-}
-
 type KD100 struct {
 	config KD100Config
 }

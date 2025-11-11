@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/hzxiao/goutil"
 )
@@ -51,4 +52,19 @@ func HttpPost(url string, data goutil.Map) (goutil.Map, error) {
 	var result goutil.Map
 	err = Bytes2S(resBody, &result)
 	return result, err
+}
+
+func HttpFormDataPost(url string, formData url.Values) (goutil.Map, error) {
+	res, err := http.Post(url, "application/x-www-form-urlencoded", strings.NewReader(formData.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用解析器解析响应
+	parser, err := NewResponseParser(res)
+	if err != nil {
+		return nil, err
+	}
+
+	return parser.Parse()
 }
