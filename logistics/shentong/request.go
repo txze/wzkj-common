@@ -15,6 +15,7 @@ const (
 const (
 	OMS_EXPRESS_ORDER_CREATE = "OMS_EXPRESS_ORDER_CREATE" //创建接口
 	EDI_MODIFY_ORDER_CANCEL  = "EDI_MODIFY_ORDER_CANCEL"  //取消接口
+	GET_ORDERDISPATCH_INFO   = "GET_ORDERDISPATCH_INFO"   //获取取件码接口
 )
 
 type CommonParamsRequest struct {
@@ -97,6 +98,12 @@ type Customer struct {
 }
 
 type CancelOrderRequest struct {
+	BillCode        string `json:"BillCode"`            //订单号（客户系统自己生成，唯一）
+	SourceOrderId   string `json:"SourceOrderId"`       //第三方平台订单号
+	OrderSourceCode string `json:"OrderSourceCodeCode"` //订单来源编码
+}
+
+type PickOrderInfoRequest struct {
 	BillCode    string `json:"billCode"`    //订单号（客户系统自己生成，唯一）
 	OrderType   string `json:"orderType"`   //01：普通订单，02：调动订单，该类型传值同下单接口一致
 	OrderSource string `json:"orderSource"` //订单来源编码

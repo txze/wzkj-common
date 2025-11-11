@@ -57,7 +57,27 @@ func (c *STOClient) CreateOrder(req *CreateOrderRequest) (*CreateOrderResponse, 
 }
 
 // CancelOrder 取消订单
-func (c *STOClient) CancelOrder(req *CancelOrderRequest) error {
+func (c *STOClient) CancelOrder(req *CancelOrderRequest) (*PickInfoResponse, error) {
+	req.OrderSourceCode = c.cfg.SourceCode
+	baseResp, err := c.doRequest(GET_ORDERDISPATCH_INFO, "ORDERMS_API", req)
+	if err != nil {
+		return nil, err
+	}
+	if baseResp.GetString("success") == SUCCESS_FALSE {
+		return nil, ierr.NewIErrorf(ierr.ParamErr, "API错误: %s(%s)", baseResp.Get("errorMsg"), baseResp.Get("errorCode"))
+	}
+
+	var rsp *PickInfoResponse
+	err = mapstructure.Decode(baseResp.GetMapP("data"), &rsp)
+	if err != nil {
+		return nil, ierr.NewIErrorf(ierr.ParseDataFail, err.Error())
+	}
+
+	return rsp, nil
+}
+
+// PickOrderInfo 获取取件信息
+func (c *STOClient) PickOrderInfo(req *PickOrderInfoRequest) error {
 	req.OrderSource = c.cfg.SourceCode
 	baseResp, err := c.doRequest(EDI_MODIFY_ORDER_CANCEL, "edi_modify_order", req)
 	if err != nil {
