@@ -21,12 +21,15 @@ type Wechat struct {
 
 func (w *Wechat) QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error) {
 	bm := make(gopay.BodyMap)
-	bm.Set("out_trade_no", orderNo)
 	wxRsp, err := w.client.V3RefundQuery(ctx, refundNo, bm)
 	logger.FromContext(ctx).Info("Wechat Query Refund called", zap.Any("wxRsp", wxRsp))
 	if err != nil {
 		logger.FromContext(ctx).Error("Wechat Query Refund Failed", zap.Error(err))
 		return nil, err
+	}
+
+	if wxRsp.Code != 0 {
+		return nil, ierr.NewIError(ierr.InvalidState, wxRsp.ErrResponse.Message)
 	}
 
 	return &common.RefundResponse{
