@@ -23,8 +23,9 @@ type UnifiedResponse struct {
 }
 
 type RefundRequest struct {
-	OrderNo   string `json:"order_no"`   //商户订单号
-	Amount    int    `json:"amount"`     //支付金额
-	Currency  string `json:"currency"`   //支付货币
-	GoodsName string `json:"goods_name"` //商品名
+	RefundNo  string `json:"refund_no"`  // 退款流水号
+	OrderNo   string `json:"order_no"`   // 商户订单号
+	Amount    int    `json:"amount"`     // 支付金额
+	Currency  string `json:"currency"`   // 支付货币
+	GoodsName string `json:"goods_name"` // 商品名
 }

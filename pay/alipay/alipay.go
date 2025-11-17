@@ -24,7 +24,8 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) erro
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", request.OrderNo).
 		Set("refund_amount", request.Amount).
-		Set("refund_reason", request.GoodsName)
+		Set("refund_reason", request.GoodsName).
+		Set("out_request_no", request.RefundNo)
 
 	// 发起退款请求
 	aliRsp, err := a.client.TradeRefund(ctx, bm)
