@@ -27,3 +27,20 @@ type PickInfoResponse struct {
 	Weight                      string `json:"Weight"`
 	PrintCode                   string `json:"PrintCode"`
 }
+
+type QuerySendServiceDetailResponse struct {
+	AvailableServiceItemList []struct {
+		FeeModel FeeModel `mapstructure:"feeModel"`
+		Title    string   `mapstructure:"title"`
+		Version  int      `mapstructure:"version"`
+	} `mapstructure:"AvailableServiceItemList"`
+	Ageing string `mapstructure:"Ageing"`
+}
+
+type FeeModel struct {
+	StartPrice          string `mapstructure:"startPrice"`
+	ContinuedHeavy      string `mapstructure:"continuedHeavy"`
+	StartWeight         string `mapstructure:"startWeight"`
+	ContinuedHeavyPrice string `mapstructure:"continuedHeavyPrice"`
+	TotalPrice          string `mapstructure:"totalPrice"`
+}

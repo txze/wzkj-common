@@ -96,27 +96,25 @@ func (c *STOClient) ParseAddressInfo(req *ParseAddressRequest) (*PickInfoRespons
 	return rsp, nil
 }
 
-//
-//// QuerySendServiceDetail 查询时效运费
-//func (c *STOClient) QuerySendServiceDetail(req *QuerySendServiceDetailRequest) (*PickInfoResponse, error) {
-//
-//	req.OrderSourceCode = c.cfg.SourceCode
-//	baseResp, err := c.doRequest(QUERY_SEND_SERVICE_DETAIL, "ORDERMS_API", req)
-//	if err != nil {
-//		return nil, err
-//	}
-//	if baseResp.GetString("success") == SUCCESS_FALSE {
-//		return nil, ierr.NewIErrorf(ierr.ParamErr, "API错误: %s(%s)", baseResp.Get("errorMsg"), baseResp.Get("errorCode"))
-//	}
-//
-//	var rsp *PickInfoResponse
-//	err = mapstructure.Decode(baseResp.GetMapP("data"), &rsp)
-//	if err != nil {
-//		return nil, ierr.NewIErrorf(ierr.ParseDataFail, err.Error())
-//	}
-//
-//	return rsp, nil
-//}
+// QuerySendServiceDetail 查询时效运费
+func (c *STOClient) QuerySendServiceDetail(req *QuerySendServiceDetailRequest) (*QuerySendServiceDetailResponse, error) {
+
+	baseResp, err := c.doRequest(QUERY_SEND_SERVICE_DETAIL, "ORDERMS_API", req)
+	if err != nil {
+		return nil, err
+	}
+	if baseResp.GetString("success") == SUCCESS_FALSE {
+		return nil, ierr.NewIErrorf(ierr.ParamErr, "API错误: %s(%s)", baseResp.Get("errorMsg"), baseResp.Get("errorCode"))
+	}
+
+	var rsp *QuerySendServiceDetailResponse
+	err = mapstructure.Decode(baseResp.GetMapP("data"), &rsp)
+	if err != nil {
+		return nil, ierr.NewIErrorf(ierr.ParseDataFail, err.Error())
+	}
+
+	return rsp, nil
+}
 
 // CancelOrder 取消订单
 func (c *STOClient) CancelOrder(req *CancelOrderRequest) error {
