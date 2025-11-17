@@ -19,6 +19,23 @@ type Wechat struct {
 	config WechatConfig
 }
 
+func (w *Wechat) QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error) {
+	bm := make(gopay.BodyMap)
+	bm.Set("out_trade_no", orderNo)
+	wxRsp, err := w.client.V3RefundQuery(ctx, refundNo, bm)
+	logger.FromContext(ctx).Info("Wechat Query Refund called", zap.Any("wxRsp", wxRsp))
+	if err != nil {
+		logger.FromContext(ctx).Error("Wechat Query Refund Failed", zap.Error(err))
+		return nil, err
+	}
+
+	return &common.RefundResponse{
+		UserReceivedAccount: wxRsp.Response.UserReceivedAccount,
+		SuccessTime:         wxRsp.Response.SuccessTime,
+		CreateTime:          wxRsp.Response.CreateTime,
+	}, nil
+}
+
 func (w *Wechat) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
 	//初始化参数Map
 	bm := make(gopay.BodyMap)

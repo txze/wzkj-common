@@ -29,3 +29,9 @@ type RefundRequest struct {
 	Currency  string `json:"currency"`   // 支付货币
 	GoodsName string `json:"goods_name"` // 商品名
 }
+
+type RefundResponse struct {
+	UserReceivedAccount string `json:"user_received_account"` // 退款入账账户
+	SuccessTime         string `json:"success_time"`          // 退款成功时间
+	CreateTime          string `json:"create_time"`           // 退款创建时间
+}

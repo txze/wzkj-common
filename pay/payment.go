@@ -23,6 +23,9 @@ type PaymentStrategy interface {
 	// Refund 退款
 	Refund(ctx context.Context, request *common.RefundRequest) error
 
+	//查询退款详情
+	QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error)
+
 	// GenerateSign 生成签名
 	GenerateSign(params map[string]interface{}) (string, error)
 

@@ -19,6 +19,32 @@ type Alipay struct {
 	config AlipayConfig
 }
 
+func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error) {
+	bm := make(gopay.BodyMap)
+	bm.
+		Set("out_trade_no", orderNo).
+		Set("out_request_no", refundNo).
+		Set("query_options", []string{
+			"deposit_back_info",
+			"gmt_refund_pay",
+		})
+	aliRsp, err := a.client.TradeFastPayRefundQuery(ctx, bm)
+	if err != nil {
+		if bizErr, ok := alipay.IsBizError(err); ok {
+			logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", bizErr))
+			// do something
+			return nil, err
+		}
+		return nil, err
+	}
+	logger.FromContext(ctx).Info("alipay query refund ", logger.Any("aliRsp", aliRsp))
+	return &common.RefundResponse{
+		UserReceivedAccount: aliRsp.Response.DepositBackInfo.EstBankReceiptTime,
+		SuccessTime:         aliRsp.Response.DepositBackInfo.BankAckTime,
+		CreateTime:          aliRsp.Response.GmtRefundPay,
+	}, nil
+}
+
 func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) error {
 	// 请求参数
 	bm := make(gopay.BodyMap)
