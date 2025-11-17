@@ -38,9 +38,9 @@ type QuerySendServiceDetailResponse struct {
 }
 
 type FeeModel struct {
-	StartPrice          string `mapstructure:"startPrice"`
-	ContinuedHeavy      string `mapstructure:"continuedHeavy"`
-	StartWeight         string `mapstructure:"startWeight"`
-	ContinuedHeavyPrice string `mapstructure:"continuedHeavyPrice"`
-	TotalPrice          string `mapstructure:"totalPrice"`
+	StartPrice          string `mapstructure:"startPrice" json:"start_price,int"`
+	ContinuedHeavy      string `mapstructure:"continuedHeavy" json:"continued_heavy,int"`
+	StartWeight         string `mapstructure:"startWeight" json:"start_weight,int"`
+	ContinuedHeavyPrice string `mapstructure:"continuedHeavyPrice" json:"continued_heavy_price,int"`
+	TotalPrice          string `mapstructure:"totalPrice" json:"total_price,int"`
 }
