@@ -11,8 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hzxiao/goutil"
-
+	"github.com/txze/wzkj-common/logistics/model"
 	"github.com/txze/wzkj-common/pkg/ierr"
 	"github.com/txze/wzkj-common/pkg/util"
 )
@@ -49,7 +48,7 @@ func (K *KD100) QueryLogisticsByNumber(code, number, phone, resultv2 string) (st
 	return doRequest(QueryURL, formData)
 }
 
-func (K *KD100) ParseAddress(addr string) (goutil.Map, error) {
+func (K *KD100) ParseAddress(addr string) (model.Address, error) {
 	param := map[string]string{
 		"content": addr,
 	}
@@ -70,18 +69,18 @@ func (K *KD100) ParseAddress(addr string) (goutil.Map, error) {
 	// 发送请求
 	data, err := doRequest(ParseAddressURL, formData)
 
-	var result goutil.Map
+	var result ParseAddress
 	err = util.Json2S(data, &result)
 	if err != nil {
 		return nil, err
 	}
 
-	code := result.GetInt64("code")
-	if code == http.StatusOK {
-		return result.GetMapP("data"), nil
+	if result.Code == http.StatusOK {
+		city := result.Data.Result[0]
+		return city.Xzq, nil
 	}
 
-	return nil, ierr.NewIError(ierr.InternalError, result.GetString("message"))
+	return nil, ierr.NewIError(ierr.InternalError, result.Message)
 }
 
 func (k *KD100) generateSign(signStr string) string {

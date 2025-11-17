@@ -3,7 +3,7 @@ package logistics
 import (
 	"fmt"
 
-	"github.com/hzxiao/goutil"
+	"github.com/txze/wzkj-common/logistics/model"
 )
 
 // LogisticsStrategy 定义接口策略
@@ -12,7 +12,7 @@ type LogisticsStrategy interface {
 	QueryLogisticsByNumber(string, string, string, string) (string, error)
 
 	//ParseAddress 解析地址信息
-	ParseAddress(addr string) (goutil.Map, error)
+	ParseAddress(addr string) (model.Address, error)
 }
 
 type LogisticsResponse struct {
@@ -46,7 +46,7 @@ func (c *LogisticsContext) QueryLogisticsByNumber(code, number, phone, resultv2 
 	return c.strategy.QueryLogisticsByNumber(code, number, phone, resultv2)
 }
 
-func (c *LogisticsContext) ParseAddress(addr string) (goutil.Map, error) {
+func (c *LogisticsContext) ParseAddress(addr string) (model.Address, error) {
 	if c.strategy == nil {
 		return nil, fmt.Errorf("未设置物流策略")
 	}
