@@ -33,7 +33,7 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		if bizErr, ok := alipay.IsBizError(err); ok {
 			logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", bizErr))
 			// do something
-			return nil, err
+			return nil, ierr.NewIError(ierr.InternalError, bizErr.Error())
 		}
 		return nil, err
 	}
