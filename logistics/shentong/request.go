@@ -13,9 +13,11 @@ const (
 )
 
 const (
-	OMS_EXPRESS_ORDER_CREATE = "OMS_EXPRESS_ORDER_CREATE" //创建接口
-	EDI_MODIFY_ORDER_CANCEL  = "EDI_MODIFY_ORDER_CANCEL"  //取消接口
-	GET_ORDERDISPATCH_INFO   = "GET_ORDERDISPATCH_INFO"   //获取取件码接口
+	OMS_EXPRESS_ORDER_CREATE  = "OMS_EXPRESS_ORDER_CREATE"  //创建接口
+	EDI_MODIFY_ORDER_CANCEL   = "EDI_MODIFY_ORDER_CANCEL"   //取消接口
+	GET_ORDERDISPATCH_INFO    = "GET_ORDERDISPATCH_INFO"    //获取取件码接口
+	QUERY_SEND_SERVICE_DETAIL = "QUERY_SEND_SERVICE_DETAIL" //查询时效运费
+	PERSONAL_ADDRESS_PARSE    = "PERSONAL_ADDRESS_PARSE"    //地址解析
 )
 
 type CommonParamsRequest struct {
@@ -107,4 +109,25 @@ type PickOrderInfoRequest struct {
 	BillCode        string `json:"BillCode"`            //订单号（客户系统自己生成，唯一）
 	SourceOrderId   string `json:"SourceOrderId"`       //第三方平台订单号
 	OrderSourceCode string `json:"OrderSourceCodeCode"` //订单来源编码
+}
+
+type QuerySendServiceDetailRequest struct {
+	SendName    string `json:"SendName"`    //发件人姓名
+	SendMobile  string `json:"SendMobile"`  //发件人手机号
+	SendProv    string `json:"SendProv"`    //发件人省份
+	SendCity    string `json:"SendCity"`    //发件人城市
+	SendArea    string `json:"SendArea"`    //发件人区县
+	SendAddress string `json:"SendAddress"` //发件人详细地址
+	RecName     string `json:"RecName"`     //收件人姓名
+	RecMobile   string `json:"RecMobile"`   //收件人手机号
+	RecProv     string `json:"RecProv"`     //收件人省份
+	RecCity     string `json:"RecCity"`     //收件人城市
+	RecArea     string `json:"RecArea"`     //收件人区县
+	RecAddress  string `json:"RecAddress"`  //收件人详细地址
+	OpenId      string `json:"OpenId"`      //下单用户唯一标识
+	Weight      string `json:"Weight"`      //物品重量（kg）
+}
+
+type ParseAddressRequest struct {
+	AddressText string `json:"addressText"`
 }

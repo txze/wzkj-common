@@ -4,10 +4,17 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
+
+	"github.com/hzxiao/goutil"
+
+	"github.com/txze/wzkj-common/pkg/ierr"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 type KD100 struct {
@@ -30,32 +37,65 @@ func (K *KD100) QueryLogisticsByNumber(code, number, phone, resultv2 string) (st
 	paramJson, _ := json.Marshal(param)
 	paramStr := string(paramJson)
 
-	// 发送请求
-	return K.customerRequest(paramStr, QUERY_URL)
-}
-
-// customerRequest 鉴权
-func (K *KD100) customerRequest(param string, postUrl string) (string, error) {
-	// 计算签名
-	signStr := param + K.config.KEY + K.config.CUSTOMER
-	hash := md5.New()
-	hash.Write([]byte(signStr))
-	sign := hex.EncodeToString(hash.Sum(nil))
-	sign = strings.ToUpper(sign)
-
+	signStr := paramStr + K.config.KEY + K.config.CUSTOMER
+	sign := K.generateSign(signStr)
 	// 构造form表单数据
 	formData := url.Values{}
 	formData.Add("customer", K.config.CUSTOMER)
 	formData.Add("sign", sign)
-	formData.Add("param", param)
+	formData.Add("param", paramStr)
 
-	return execute(postUrl, formData)
+	// 发送请求
+	return doRequest(QueryURL, formData)
+}
+
+func (K *KD100) ParseAddress(addr string) (goutil.Map, error) {
+	param := map[string]string{
+		"content": addr,
+	}
+
+	// 将参数转换为JSON字符串
+	paramJson, _ := json.Marshal(param)
+	paramStr := string(paramJson)
+
+	// 拼接签名参数
+	t := fmt.Sprintf("%d", time.Now().UnixMilli())
+	signStr := paramStr + t + K.config.KEY + K.config.Secret
+	sign := K.generateSign(signStr)
+	formData := url.Values{}
+	formData.Add("key", K.config.KEY)
+	formData.Add("t", t)
+	formData.Add("sign", sign)
+	formData.Add("param", paramStr)
+	// 发送请求
+	data, err := doRequest(ParseAddressURL, formData)
+
+	var result goutil.Map
+	err = util.Json2S(data, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	code := result.GetInt64("code")
+	if code == http.StatusOK {
+		return result.GetMapP("data"), nil
+	}
+
+	return nil, ierr.NewIError(ierr.InternalError, result.GetString("message"))
+}
+
+func (k *KD100) generateSign(signStr string) string {
+	hash := md5.New()
+	hash.Write([]byte(signStr))
+	sign := hex.EncodeToString(hash.Sum(nil))
+	sign = strings.ToUpper(sign)
+	return sign
 }
 
 /**
 *执行HTTP请求
  */
-func execute(postUrl string, formData url.Values) (string, error) {
+func doRequest(postUrl string, formData url.Values) (string, error) {
 	// 创建HTTP客户端
 	client := &http.Client{}
 
