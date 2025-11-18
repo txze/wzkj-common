@@ -52,5 +52,6 @@ type RefundOrderResponse struct {
 	Refund              int    `json:"refund"`                // 退款标价金额，单位为分，可以做部分退款
 	PayerTotal          int    `json:"payer_total"`           // 用户支付金额，单位为分
 	PayerRefund         int    `json:"payer_refund"`          // 用户退款金额，不包含所有优惠券金额
+	IsSuccess           bool   `json:"is_success"`            //是否成功
 	RefundInfo          any    `json:"refund_info"`           //退款信息
 }
