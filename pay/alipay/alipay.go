@@ -45,7 +45,7 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 	}, nil
 }
 
-func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) error {
+func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error) {
 	// 请求参数
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", request.OrderNo).
@@ -59,14 +59,34 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) erro
 		if bizErr, ok := alipay.IsBizError(err); ok {
 			logger.FromContext(ctx).Error("alipay refund ", logger.Any("error", bizErr))
 			// do something
-			return err
+			return nil, err
 		}
-		return err
+		return nil, err
 	}
 
-	logger.FromContext(ctx).Info("alipay refund success", logger.Any("data", *aliRsp))
+	//queryPayment, err := a.QueryRefund(ctx, request.RefundNo, request.OrderNo)
+	//if err != nil {
+	//	logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", err))
+	//}
 
-	return nil
+	logger.FromContext(ctx).Info("alipay refund success", logger.Any("data", *aliRsp))
+	refundFee, err := decimal.NewFromString(aliRsp.Response.RefundFee)
+	if err != nil {
+		return nil, err
+	}
+
+	return &common.RefundOrderResponse{
+		OutRefundNo:         request.RefundNo,
+		TransactionId:       aliRsp.Response.TradeNo,
+		OutTradeNo:          aliRsp.Response.OutTradeNo,
+		Channel:             "",
+		UserReceivedAccount: "",
+		SuccessTime:         "",
+		CreateTime:          "",
+		Status:              aliRsp.Response.FundChange,
+		PayerRefund:         int(refundFee.Mul(decimal.NewFromInt(100)).IntPart()),
+		RefundInfo:          aliRsp,
+	}, nil
 }
 
 func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
@@ -141,12 +161,12 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		return nil, err
 	}
 
-	totalAmount, err := decimal.NewFromString(bm.GetString("total_amount"))
+	totalAmount, err := decimal.NewFromString(aliRsp.Response.TotalAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	buyerPayAmount, err := decimal.NewFromString(bm.GetString("buyer_pay_amount"))
+	buyerPayAmount, err := decimal.NewFromString(aliRsp.Response.BuyerPayAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +177,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		PlatformID:  aliRsp.Response.TradeNo,
 		Amount:      int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		Status:      aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
-		TradeStatus: bm.GetString("trade_status"),
+		TradeStatus: aliRsp.Response.TradeStatus,
 		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
 		PaidTime:    aliRsp.Response.SendPayDate,
 		Message:     aliRsp,

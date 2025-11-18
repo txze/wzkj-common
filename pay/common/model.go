@@ -35,3 +35,19 @@ type RefundResponse struct {
 	SuccessTime         string `json:"success_time"`          // 退款成功时间
 	CreateTime          string `json:"create_time"`           // 退款创建时间
 }
+
+type RefundOrderResponse struct {
+	OutRefundNo         string `json:"out_refund_no"`         // 商户退款单号
+	TransactionId       string `json:"transaction_id"`        // 支付系统生成的订单号
+	OutTradeNo          string `json:"out_trade_no"`          // 商户系统内部订单号
+	Channel             string `json:"channel"`               // 退款渠道
+	UserReceivedAccount string `json:"user_received_account"` // 退款入账账户
+	SuccessTime         string `json:"success_time"`          // 退款成功时间
+	CreateTime          string `json:"create_time"`           // 退款创建时间
+	Status              string `json:"status"`                // 退款状态
+	Total               int    `json:"total"`                 // 订单总金额，单位为分
+	Refund              int    `json:"refund"`                // 退款标价金额，单位为分，可以做部分退款
+	PayerTotal          int    `json:"payer_total"`           // 用户支付金额，单位为分
+	PayerRefund         int    `json:"payer_refund"`          // 用户退款金额，不包含所有优惠券金额
+	RefundInfo          any    `json:"refund_info"`           //退款信息
+}

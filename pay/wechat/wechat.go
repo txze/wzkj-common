@@ -124,7 +124,7 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	}, nil
 }
 
-func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) error {
+func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error) {
 	// 初始化 BodyMap
 	bm := make(gopay.BodyMap)
 	// 必填 退款订单号（程序员定义的）
@@ -142,17 +142,32 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) erro
 	refund, err := w.client.V3Refund(ctx, bm)
 	if err != nil {
 		logger.FromContext(ctx).Error("Wechat Refund Failed", zap.Error(err))
-		return err
+		return nil, err
 	}
 
 	// 将非正常退款异常记录
 	// 返回：404 > {"code":"RESOURCE_NOT_EXISTS","message":"订单不存在"}
-	if refund.Code == 404 || refund.Code == 400 || refund.Code == 403 {
+	if refund.Code == http.StatusNotFound || refund.Code == http.StatusBadRequest || refund.Code == http.StatusForbidden {
 		logger.FromContext(ctx).Error("Wechat Refund Failed", zap.Any("refund", refund))
-		return errors.New(refund.Error)
+		return nil, errors.New(refund.Error)
 	}
 	logger.FromContext(ctx).Info("wechat refund success", logger.Any("data", refund))
-	return nil
+	return &common.RefundOrderResponse{
+		OutRefundNo:         refund.Response.OutRefundNo,
+		TransactionId:       refund.Response.TransactionId,
+		OutTradeNo:          refund.Response.OutTradeNo,
+		Channel:             refund.Response.Channel,
+		UserReceivedAccount: refund.Response.UserReceivedAccount,
+		SuccessTime:         refund.Response.SuccessTime,
+		CreateTime:          refund.Response.CreateTime,
+		Status:              refund.Response.Status,
+		FundsAccount:        refund.Response.FundsAccount,
+		Total:               refund.Response.Amount.Total,
+		Refund:              refund.Response.Amount.Refund,
+		PayerTotal:          refund.Response.Amount.PayerTotal,
+		PayerRefund:         refund.Response.Amount.PayerRefund,
+		RefundInfo:          refund,
+	}, nil
 }
 
 func (w *Wechat) GenerateSign(params map[string]interface{}) (string, error) {

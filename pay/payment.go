@@ -21,7 +21,7 @@ type PaymentStrategy interface {
 	QueryPayment(orderID string) (*common.UnifiedResponse, error)
 
 	// Refund 退款
-	Refund(ctx context.Context, request *common.RefundRequest) error
+	Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error)
 
 	//查询退款详情
 	QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error)
