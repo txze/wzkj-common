@@ -161,7 +161,6 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		SuccessTime:         refund.Response.SuccessTime,
 		CreateTime:          refund.Response.CreateTime,
 		Status:              refund.Response.Status,
-		FundsAccount:        refund.Response.FundsAccount,
 		Total:               refund.Response.Amount.Total,
 		Refund:              refund.Response.Amount.Refund,
 		PayerTotal:          refund.Response.Amount.PayerTotal,
