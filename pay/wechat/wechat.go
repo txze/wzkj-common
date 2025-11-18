@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
+	"github.com/jinzhu/now"
 	"go.uber.org/zap"
 
 	"github.com/txze/wzkj-common/logger"
@@ -155,14 +157,16 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		return nil, errors.New(refund.Error)
 	}
 	logger.FromContext(ctx).Info("wechat refund success", logger.Any("data", refund))
+	createTime, _ := now.Parse(time.RFC3339, refund.Response.CreateTime)
+	successTime, _ := now.Parse(time.RFC3339, refund.Response.SuccessTime)
 	return &common.RefundOrderResponse{
 		OutRefundNo:         refund.Response.OutRefundNo,
 		TransactionId:       refund.Response.TransactionId,
 		OutTradeNo:          refund.Response.OutTradeNo,
 		Channel:             refund.Response.Channel,
 		UserReceivedAccount: refund.Response.UserReceivedAccount,
-		SuccessTime:         refund.Response.SuccessTime,
-		CreateTime:          refund.Response.CreateTime,
+		SuccessTime:         successTime.Format(time.DateTime),
+		CreateTime:          createTime.Format(time.DateTime),
 		Status:              refund.Response.Status,
 		IsSuccess:           refund.Response.Status == gopay.SUCCESS,
 		Total:               refund.Response.Amount.Total,
