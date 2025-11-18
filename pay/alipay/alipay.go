@@ -48,8 +48,9 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error) {
 	// 请求参数
 	bm := make(gopay.BodyMap)
+	result := decimal.NewFromInt(int64(request.Amount)).Div(decimal.NewFromInt(100))
 	bm.Set("out_trade_no", request.OrderNo).
-		Set("refund_amount", request.Amount).
+		Set("refund_amount", result.String()).
 		Set("refund_reason", request.GoodsName).
 		Set("out_request_no", request.RefundNo)
 
