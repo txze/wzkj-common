@@ -39,9 +39,9 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 	}
 	logger.FromContext(ctx).Info("alipay query refund ", logger.Any("aliRsp", aliRsp))
 	return &common.RefundResponse{
-		UserReceivedAccount:  aliRsp.Response.DepositBackInfo.EstBankReceiptTime,
-		SuccessTime:          aliRsp.Response.DepositBackInfo.BankAckTime,
-		CreateTime:           aliRsp.Response.GmtRefundPay,
+		UserReceivedAccount:  "",
+		SuccessTime:          aliRsp.Response.GmtRefundPay,
+		CreateTime:           aliRsp.Response.DepositBackInfo.BankAckTime,
 		RefundStatus:         aliRsp.Response.RefundStatus == "REFUND_SUCCESS",
 		OriginalRefundStatus: aliRsp.Response.RefundStatus,
 		Message:              aliRsp.Response.Msg,
