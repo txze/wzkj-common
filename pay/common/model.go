@@ -31,9 +31,12 @@ type RefundRequest struct {
 }
 
 type RefundResponse struct {
-	UserReceivedAccount string `json:"user_received_account"` // 退款入账账户
-	SuccessTime         string `json:"success_time"`          // 退款成功时间
-	CreateTime          string `json:"create_time"`           // 退款创建时间
+	UserReceivedAccount  string `json:"user_received_account"`  // 退款入账账户
+	SuccessTime          string `json:"success_time"`           // 退款成功时间
+	CreateTime           string `json:"create_time"`            // 退款创建时间
+	OriginalRefundStatus string `json:"original_refund_status"` // 退款状态
+	RefundStatus         bool   `json:"refund_status"`          // 退款状态
+	Message              string `json:"message"`                //错误信息
 }
 
 type RefundOrderResponse struct {

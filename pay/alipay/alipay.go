@@ -39,9 +39,12 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 	}
 	logger.FromContext(ctx).Info("alipay query refund ", logger.Any("aliRsp", aliRsp))
 	return &common.RefundResponse{
-		UserReceivedAccount: aliRsp.Response.DepositBackInfo.EstBankReceiptTime,
-		SuccessTime:         aliRsp.Response.DepositBackInfo.BankAckTime,
-		CreateTime:          aliRsp.Response.GmtRefundPay,
+		UserReceivedAccount:  aliRsp.Response.DepositBackInfo.EstBankReceiptTime,
+		SuccessTime:          aliRsp.Response.DepositBackInfo.BankAckTime,
+		CreateTime:           aliRsp.Response.GmtRefundPay,
+		RefundStatus:         aliRsp.Response.RefundStatus == "REFUND_SUCCESS",
+		OriginalRefundStatus: aliRsp.Response.RefundStatus,
+		Message:              aliRsp.Response.Msg,
 	}, nil
 }
 
@@ -65,10 +68,16 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		return nil, err
 	}
 
-	//queryPayment, err := a.QueryRefund(ctx, request.RefundNo, request.OrderNo)
-	//if err != nil {
-	//	logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", err))
-	//}
+	queryRefund, err := a.QueryRefund(ctx, request.RefundNo, request.OrderNo)
+	if err != nil {
+		logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", err))
+		return nil, ierr.NewIError(ierr.InternalError, err.Error())
+	}
+
+	if !queryRefund.RefundStatus {
+		logger.FromContext(ctx).Error("alipay refund ", logger.Any("error", queryRefund.RefundStatus))
+		return nil, ierr.NewIError(ierr.InternalError, "退款失败:"+queryRefund.Message)
+	}
 
 	logger.FromContext(ctx).Info("alipay refund success", logger.Any("data", *aliRsp))
 	refundFee, err := decimal.NewFromString(aliRsp.Response.RefundFee)

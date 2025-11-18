@@ -33,9 +33,12 @@ func (w *Wechat) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 	}
 
 	return &common.RefundResponse{
-		UserReceivedAccount: wxRsp.Response.UserReceivedAccount,
-		SuccessTime:         wxRsp.Response.SuccessTime,
-		CreateTime:          wxRsp.Response.CreateTime,
+		UserReceivedAccount:  wxRsp.Response.UserReceivedAccount,
+		SuccessTime:          wxRsp.Response.SuccessTime,
+		CreateTime:           wxRsp.Response.CreateTime,
+		OriginalRefundStatus: wxRsp.Response.Status,
+		RefundStatus:         wxRsp.Response.Status == gopay.SUCCESS,
+		Message:              wxRsp.Error,
 	}, nil
 }
 
