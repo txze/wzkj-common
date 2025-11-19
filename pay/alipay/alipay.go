@@ -38,10 +38,16 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		return nil, err
 	}
 	logger.FromContext(ctx).Info("alipay query refund ", logger.Any("aliRsp", aliRsp))
+	successTime := aliRsp.Response.GmtRefundPay
+	createTime := ""
+	if aliRsp.Response.DepositBackInfo.EstBankReceiptTime != "" {
+		successTime = aliRsp.Response.DepositBackInfo.EstBankReceiptTime
+		createTime = aliRsp.Response.GmtRefundPay
+	}
 	return &common.RefundResponse{
 		UserReceivedAccount:  "",
-		SuccessTime:          aliRsp.Response.GmtRefundPay,
-		CreateTime:           aliRsp.Response.DepositBackInfo.BankAckTime,
+		SuccessTime:          successTime,
+		CreateTime:           createTime,
 		RefundStatus:         aliRsp.Response.RefundStatus == "REFUND_SUCCESS",
 		OriginalRefundStatus: aliRsp.Response.RefundStatus,
 		Message:              aliRsp.Response.Msg,
