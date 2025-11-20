@@ -5,10 +5,21 @@ import (
 )
 
 type STOClient struct {
-	cfg               *Config
-	adaptorCreate     *CreateOrderAdaptor
-	adaptorCancel     *CancelOrderAdaptor
-	adaptorPriceQuote *GetPriceQuoteReqAdaptor
+	cfg                      *Config
+	adaptorCreate            *CreateOrderAdaptor
+	adaptorCancel            *CancelOrderAdaptor
+	adaptorPriceQuote        *GetPriceQuoteReqAdaptor
+	adaptorSubscribeTracking *SubscribeTrackingAdaptor
+}
+
+func (c *STOClient) SubscribeTracking(req *model.SubscribeTrackingReq) error {
+	param := c.adaptorSubscribeTracking.ConvertRequest(req)
+	formData := convertFormData(STO_TRACE_PLATFORM_SUBSCRIBE, c.cfg.AppKey, c.cfg.ResourceCode, "sto_trace_platform", c.cfg.SecretKey, param)
+	baseResp, err := model.DoRequest(c.cfg.GetBaseUrl(), formData)
+	if err != nil {
+		return err
+	}
+	return c.adaptorSubscribeTracking.ParseResponse(baseResp)
 }
 
 func (c *STOClient) GetPriceQuote(req *model.GetPriceQuoteReq) (*model.PriceQuote, error) {

@@ -25,4 +25,7 @@ type LogisticsProvider interface {
 
 	//GetPriceQuote 获取时效性 以及 预估费用
 	GetPriceQuote(req *model.GetPriceQuoteReq) (*model.PriceQuote, error)
+
+	//SubscribeTracking 订阅物流信息
+	SubscribeTracking(req *model.SubscribeTrackingReq) error
 }

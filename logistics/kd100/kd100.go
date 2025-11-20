@@ -19,6 +19,11 @@ type KD100 struct {
 	adaptorQuery *QueryLogisticsAdaptor
 }
 
+func (k *KD100) SubscribeTracking(req *model.SubscribeTrackingReq) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (k *KD100) GetPriceQuote(req *model.GetPriceQuoteReq) (*model.PriceQuote, error) {
 	//TODO implement me
 	panic("implement me")

@@ -89,6 +89,12 @@ type Receiver struct {
 	Address  string `json:"address"`  //详细地址
 }
 
+type SubscribeTrackingReq struct {
+	ExpressCode string     `json:"express_code"` //快递编码
+	WaybillNo   string     `json:"waybill_no"`   //物流单号
+	Parameters  goutil.Map `json:"parameters"`   //附加参数信息
+}
+
 // DoRequest 执行API请求
 func DoRequest(url string, formData url.Values) (goutil.Map, error) {
 	resp, err := util.HttpFormDataPost(url, formData)

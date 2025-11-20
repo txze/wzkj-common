@@ -131,3 +131,19 @@ func stringToInt(numStr string) int {
 	}
 	return startPrice
 }
+
+type SubscribeTrackingAdaptor struct {
+}
+
+func (c *SubscribeTrackingAdaptor) ConvertRequest(req *model.SubscribeTrackingReq) goutil.Map {
+	return goutil.Map{
+		"waybillNo": req.WaybillNo,
+	}
+}
+
+func (c *SubscribeTrackingAdaptor) ParseResponse(rspMap goutil.Map) error {
+	if rspMap.GetString("success") == SUCCESS_FALSE {
+		return ierr.NewIError(ierr.ParamErr, fmt.Sprintf("API错误: %s(%s); data: %v", rspMap.Get("errorMsg"), rspMap.Get("errorCode"), rspMap))
+	}
+	return nil
+}
