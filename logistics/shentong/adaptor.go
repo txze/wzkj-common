@@ -171,32 +171,38 @@ func (q *QueryLogisticsAdaptor) ParseResponse(waybillNo string, rspMap goutil.Ma
 	var data []*model.Data
 	for i := len(dataRes) - 1; i >= 0; i-- {
 		m := dataRes[i]
+		code := model.StatusCodeMapping[m.GetString("scanType")]
 		data = append(data, &model.Data{
 			Time:       m.GetString("opTime"),
 			Context:    m.GetString("memo"),
 			Ftime:      m.GetString("opTime"),
 			AreaCode:   "",
 			AreaName:   m.GetString("opOrgProvinceName") + "," + m.GetString("opOrgCityName"),
-			Status:     m.GetString("status"),
+			Status:     m.GetString("scanType"),
 			Location:   m.GetString("opOrgCityName"),
 			AreaCenter: "",
 			AreaPinYin: "",
-			StatusCode: "",
+			StatusCode: strconv.Itoa(code),
 		})
 	}
 
-	//for _, m := range dataRes {
+	scanType := dataRes[len(dataRes)-1].GetString("scanType")
+	status, ItemStatus, code := model.ResolveStatusByText(scanType)
 
-	//}
-	//
-	//result := model.QueryResp{
-	//	WaybillNo:   rspMap.GetString("nu"),
-	//	Ischeck:     rspMap.GetString("ischeck"),
-	//	ExpressCode: rspMap.GetString("com"),
-	//	//Status:      GetHighLevelStatusMeaning(statusCode),
-	//	State: rspMap.GetString("state"),
-	//	Data:  data,
-	//}
+	var Ischeck = "0"
+	if status == "签收" {
+		Ischeck = "1"
+	}
 
-	return nil, nil
+	result := model.QueryResp{
+		WaybillNo:   waybillNo,
+		Ischeck:     Ischeck,
+		ExpressCode: "shentong",
+		Status:      status,
+		ItemStatus:  ItemStatus,
+		State:       strconv.Itoa(code),
+		Data:        data,
+	}
+
+	return &result, nil
 }
