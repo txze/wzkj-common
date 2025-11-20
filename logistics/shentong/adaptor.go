@@ -147,3 +147,56 @@ func (c *SubscribeTrackingAdaptor) ParseResponse(rspMap goutil.Map) error {
 	}
 	return nil
 }
+
+// QueryLogisticsAdaptor 物流查询适配器
+type QueryLogisticsAdaptor struct {
+}
+
+func (q *QueryLogisticsAdaptor) ConvertRequest(req *model.QueryLogisticsRequest) goutil.Map {
+	data := goutil.Map{
+		"order":         "desc",
+		"waybillNoList": []string{req.WaybillNo},
+	}
+	return data
+}
+
+func (q *QueryLogisticsAdaptor) ParseResponse(waybillNo string, rspMap goutil.Map) (*model.QueryResp, error) {
+	if rspMap.GetString("success") == SUCCESS_FALSE {
+		return nil, ierr.NewIError(ierr.ParamErr, fmt.Sprintf("API错误: %s(%s)", rspMap.Get("errorMsg"), rspMap.Get("errorCode")))
+	}
+	dataRes := rspMap.GetMapArrayP("data/" + waybillNo)
+	if len(dataRes) == 0 {
+		return nil, ierr.NewIError(ierr.ParamErr, fmt.Sprintf("数据解析错误: %v", rspMap))
+	}
+	var data []*model.Data
+	for i := len(dataRes) - 1; i >= 0; i-- {
+		m := dataRes[i]
+		data = append(data, &model.Data{
+			Time:       m.GetString("opTime"),
+			Context:    m.GetString("memo"),
+			Ftime:      m.GetString("opTime"),
+			AreaCode:   "",
+			AreaName:   m.GetString("opOrgProvinceName") + "," + m.GetString("opOrgCityName"),
+			Status:     m.GetString("status"),
+			Location:   m.GetString("opOrgCityName"),
+			AreaCenter: "",
+			AreaPinYin: "",
+			StatusCode: "",
+		})
+	}
+
+	//for _, m := range dataRes {
+
+	//}
+	//
+	//result := model.QueryResp{
+	//	WaybillNo:   rspMap.GetString("nu"),
+	//	Ischeck:     rspMap.GetString("ischeck"),
+	//	ExpressCode: rspMap.GetString("com"),
+	//	//Status:      GetHighLevelStatusMeaning(statusCode),
+	//	State: rspMap.GetString("state"),
+	//	Data:  data,
+	//}
+
+	return nil, nil
+}

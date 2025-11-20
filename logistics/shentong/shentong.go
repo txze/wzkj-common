@@ -10,6 +10,7 @@ type STOClient struct {
 	adaptorCancel            *CancelOrderAdaptor
 	adaptorPriceQuote        *GetPriceQuoteReqAdaptor
 	adaptorSubscribeTracking *SubscribeTrackingAdaptor
+	adaptorQueryLogistics    *QueryLogisticsAdaptor
 }
 
 func (c *STOClient) SubscribeTracking(req *model.SubscribeTrackingReq) error {
@@ -38,8 +39,14 @@ func (c *STOClient) ParseAddress(addr string) (model.Address, error) {
 }
 
 func (c *STOClient) QueryLogistics(req *model.QueryLogisticsRequest) (*model.QueryResp, error) {
-	//TODO implement me
-	panic("implement me")
+	param := c.adaptorQueryLogistics.ConvertRequest(req)
+	formData := convertFormData(STO_TRACE_QUERY_COMMON, c.cfg.AppKey, c.cfg.ResourceCode, "sto_trace_query", c.cfg.SecretKey, param)
+	baseResp, err := model.DoRequest(c.cfg.GetBaseUrl(), formData)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.adaptorQueryLogistics.ParseResponse(req.WaybillNo, baseResp)
 }
 
 func (c *STOClient) CreateOrder(req *model.CreateOrderReq) (*model.CreateOrderResp, error) {

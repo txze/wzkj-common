@@ -10,6 +10,7 @@ type QueryResp struct {
 	Ischeck     string  `json:"ischeck"`
 	ExpressCode string  `json:"express_code"` // 快递编码
 	Status      string  `json:"status"`
+	ItemStatus  string  `json:"item_status"`
 	State       string  `json:"state"`
 	Data        []*Data `json:"data"`
 }
