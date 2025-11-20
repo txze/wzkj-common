@@ -25,7 +25,7 @@ func (q *QueryLogisticsAdaptor) ConvertRequest(req *model.QueryLogisticsRequest)
 }
 
 func (q *QueryLogisticsAdaptor) ParseResponse(rspMap goutil.Map) (*model.QueryResp, error) {
-	if rspMap.GetBool("result") == false {
+	if rspMap.GetBool("result") == false && rspMap.GetString("message") != "ok" {
 		return nil, ierr.NewIErrorf(ierr.InternalError, "error:%s code:%s", rspMap.GetString("message"), rspMap.GetString("returnCode"))
 	}
 	dataRes := rspMap.GetMapArray("data")
