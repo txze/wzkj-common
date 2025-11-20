@@ -6,6 +6,7 @@ type Config struct {
 	SecretKey    string
 	ResourceCode string
 	SourceCode   string
+	Customer     Customer //客户信息
 }
 
 func (c *Config) GetBaseUrl() string {

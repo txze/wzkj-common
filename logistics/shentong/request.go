@@ -1,6 +1,14 @@
 package shentong
 
-import "github.com/hzxiao/goutil"
+import (
+	"crypto/md5"
+	"encoding/base64"
+	"net/url"
+
+	"github.com/hzxiao/goutil"
+
+	"github.com/txze/wzkj-common/pkg/util"
+)
 
 const (
 	BaseSandboxUrl = "http://cloudinter-linkgatewaytest.sto.cn/gateway/link.do" //测试
@@ -81,15 +89,11 @@ type Receiver struct {
 }
 
 type Cargo struct {
-	Battery     string `json:"battery"`    //带电标识 （10/未知 20/带电 30/不带电）
-	GoodsType   string `json:"goodsType"`  //物品类型（大件、小件、扁平件\文件）
-	GoodsName   string `json:"goodsName"`  //物品名称
-	GoodsCount  int    `json:"goodsCount"` //物品数量
-	SpaceX      int    `json:"spaceX"`
-	SpaceY      int    `json:"spaceY"`
-	SpaceZ      int    `json:"spaceZ"`
-	Weight      int    `json:"weight"`
-	GoodsAmount string `json:"goodsAmount"`
+	Battery    string `json:"battery"`    //带电标识 （10/未知 20/带电 30/不带电）
+	GoodsType  string `json:"goodsType"`  //物品类型（大件、小件、扁平件\文件）
+	GoodsName  string `json:"goodsName"`  //物品名称
+	GoodsCount int    `json:"goodsCount"` //物品数量
+	Weight     int    `json:"weight"`     //kg
 }
 
 type Customer struct {
@@ -130,4 +134,36 @@ type QuerySendServiceDetailRequest struct {
 
 type ParseAddressRequest struct {
 	AddressText string `json:"addressText"`
+}
+
+func convertFormData(apiName, appKey, fromCode, toAppKey, secretKey string, data interface{}) url.Values {
+	// 序列化业务数据
+	dataStr := util.S2Json(data)
+	// 生成签名
+	sign := generateSign(dataStr, secretKey)
+
+	// 构建参数
+	// 构造表单数据
+	formData := url.Values{}
+	formData.Add("api_name", apiName)
+	formData.Add("content", dataStr)
+	formData.Add("from_appkey", appKey)
+	formData.Add("from_code", fromCode)
+	formData.Add("to_appkey", toAppKey)
+	formData.Add("to_code", toAppKey)
+	formData.Add("data_digest", sign)
+
+	return formData
+}
+
+// generateSign 生成签名
+func generateSign(content, secretKey string) string {
+	// 拼接内容和密钥
+	data := content + secretKey
+
+	// 计算MD5哈希（二进制格式）
+	hash := md5.Sum([]byte(data))
+
+	// Base64编码
+	return base64.StdEncoding.EncodeToString(hash[:])
 }
