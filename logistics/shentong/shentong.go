@@ -83,6 +83,11 @@ func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error
 
 func NewSTOClient(cfg *Config) *STOClient {
 	return &STOClient{
-		cfg: cfg,
+		cfg:                      cfg,
+		adaptorCreate:            &CreateOrderAdaptor{},
+		adaptorCancel:            &CancelOrderAdaptor{},
+		adaptorPriceQuote:        &GetPriceQuoteReqAdaptor{},
+		adaptorSubscribeTracking: &SubscribeTrackingAdaptor{},
+		adaptorQueryLogistics:    &QueryLogisticsAdaptor{},
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/hzxiao/goutil"
 
 	"github.com/txze/wzkj-common/logistics/model"
+	"github.com/txze/wzkj-common/pkg/ierr"
 	"github.com/txze/wzkj-common/pkg/util"
 )
 
@@ -24,6 +25,9 @@ func (q *QueryLogisticsAdaptor) ConvertRequest(req *model.QueryLogisticsRequest)
 }
 
 func (q *QueryLogisticsAdaptor) ParseResponse(rspMap goutil.Map) (*model.QueryResp, error) {
+	if rspMap.GetBool("result") == false {
+		return nil, ierr.NewIErrorf(ierr.InternalError, "error:%s code:%s", rspMap.GetString("message"), rspMap.GetString("returnCode"))
+	}
 	dataRes := rspMap.GetMapArray("data")
 	var statusCode int
 	var err error
