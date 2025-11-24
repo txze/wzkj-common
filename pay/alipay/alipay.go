@@ -3,6 +3,7 @@ package alipay
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
@@ -149,7 +150,7 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	if err != nil {
 		return nil, err
 	}
-
+	t, _ := time.Parse(time.DateTime, bm.GetString("gmt_payment"))
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     bm.GetString("out_trade_no"),
@@ -158,7 +159,7 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		Status:      bm.GetString("trade_status") == "TRADE_SUCCESS",
 		TradeStatus: bm.GetString("trade_status"),
 		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
-		PaidTime:    bm.GetString("gmt_payment"),
+		PaidTime:    t,
 		Params:      bm.GetString("passback_params"),
 		Message:     bm,
 	}, nil
@@ -187,7 +188,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	t, _ := time.Parse(time.DateTime, aliRsp.Response.SendPayDate)
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     aliRsp.Response.OutTradeNo,
@@ -196,7 +197,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		Status:      aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
 		TradeStatus: aliRsp.Response.TradeStatus,
 		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
-		PaidTime:    aliRsp.Response.SendPayDate,
+		PaidTime:    t,
 		Message:     aliRsp,
 	}, nil
 }

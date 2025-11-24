@@ -99,7 +99,7 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	if err != nil {
 		return nil, err
 	}
-
+	t, _ := time.Parse(time.RFC3339, result.SuccessTime)
 	return &common.UnifiedResponse{
 		Platform:    w.GetType(),
 		OrderID:     result.OutTradeNo,
@@ -108,7 +108,7 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		Status:      result.TradeState == gopay.SUCCESS,
 		TradeStatus: result.TradeState,
 		PaidAmount:  result.Amount.PayerTotal,
-		PaidTime:    result.SuccessTime,
+		PaidTime:    t,
 		Params:      result.Attach,
 		Message:     result,
 	}, nil
@@ -119,6 +119,7 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	t, _ := time.Parse(time.RFC3339, queryOrder.Response.SuccessTime)
 	return &common.UnifiedResponse{
 		Platform:    w.GetType(),
 		OrderID:     queryOrder.Response.OutTradeNo,
@@ -127,7 +128,7 @@ func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 		Status:      queryOrder.Response.TradeState == gopay.SUCCESS,
 		TradeStatus: queryOrder.Response.TradeState,
 		PaidAmount:  queryOrder.Response.Amount.PayerTotal,
-		PaidTime:    queryOrder.Response.SuccessTime,
+		PaidTime:    t,
 		Message:     queryOrder,
 	}, nil
 }

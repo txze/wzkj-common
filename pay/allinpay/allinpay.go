@@ -97,8 +97,8 @@ func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error)
 		Status:      status,
 		TradeStatus: rsp.TrxStatus,
 		PaidAmount:  rsp.TrxAmt,
-		PaidTime:    rsp.FinTime,
-		Message:     rsp,
+		//PaidTime:    rsp.FinTime,
+		Message: rsp,
 	}, nil
 }
 
@@ -218,8 +218,8 @@ func (a *AllInPay) VerifyNotification(req *http.Request) (*common.UnifiedRespons
 		//Amount:     params["initamt"].(int),
 		//Status:     params["trxstatus"].(string),
 		//PaidAmount: params["trxamt"].(int),
-		PaidTime: params["paytime"].(string),
-		Message:  params,
+		//PaidTime: params["paytime"].(string),
+		Message: params,
 	}, nil
 }
 
