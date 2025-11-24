@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
+	"github.com/jinzhu/now"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 
@@ -150,7 +151,7 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	if err != nil {
 		return nil, err
 	}
-	t, _ := time.Parse(time.DateTime, bm.GetString("gmt_payment"))
+	t, _ := now.Parse(time.DateTime, bm.GetString("gmt_payment"))
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     bm.GetString("out_trade_no"),
@@ -188,7 +189,7 @@ func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	t, _ := time.Parse(time.DateTime, aliRsp.Response.SendPayDate)
+	t, _ := now.Parse(time.DateTime, aliRsp.Response.SendPayDate)
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     aliRsp.Response.OutTradeNo,
