@@ -17,10 +17,11 @@ type QueryLogisticsRequest struct {
 
 // 创建订单信息
 type CreateOrderReq struct {
-	OrderNo        string   `json:"order_no"` //订单号
-	Sender         Sender   `json:"sender"`   //寄件人
-	Receiver       Receiver `json:"receiver"` //接收人
-	Cargo          Cargo    `json:"cargo"`    //物品信息
+	ExpressCode    string   `json:"express_code"` // 快递编码
+	OrderNo        string   `json:"order_no"`     //订单号
+	Sender         Sender   `json:"sender"`       //寄件人
+	Receiver       Receiver `json:"receiver"`     //接收人
+	Cargo          Cargo    `json:"cargo"`        //物品信息
 	FetchBeginTime string   `json:"fetch_begin_time"`
 	FetchEndTime   string   `json:"fetch_end_time"`
 }
