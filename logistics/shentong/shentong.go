@@ -1,6 +1,8 @@
 package shentong
 
 import (
+	"fmt"
+
 	"github.com/txze/wzkj-common/logistics/model"
 )
 
@@ -72,8 +74,8 @@ func (c *STOClient) CancelOrder(req *model.CancelOrderReq) error {
 }
 
 func (c *STOClient) ParseWebhook(body []byte) (*model.WebhookData, error) {
-	//TODO implement me
-	panic("implement me")
+	fmt.Println("body:", string(body))
+	return nil, nil
 }
 
 func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error) {

@@ -105,3 +105,9 @@ func DoRequest(url string, formData url.Values) (goutil.Map, error) {
 
 	return resp, nil
 }
+
+// 回调信息
+type NotifyReq struct {
+	ExpressCode string `json:"express_code"` // 快递编码
+	Body        []byte `json:"body"`
+}
