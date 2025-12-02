@@ -139,9 +139,7 @@ func (c *SubscribeTrackingAdaptor) ConvertRequest(req *model.SubscribeTrackingRe
 	return goutil.Map{
 		"subscribeInfoList": []goutil.Map{
 			{
-				"subscribeInfo": goutil.Map{
-					"waybillNo": req.WaybillNo,
-				},
+				"waybillNo": req.WaybillNo,
 			},
 		},
 	}
