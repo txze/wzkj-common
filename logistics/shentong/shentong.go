@@ -123,19 +123,19 @@ func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error
 		notifyRsp.UserName = rsp.GetStringP("changeInfo/UserName")
 	case EventOrderCancel:
 		notifyRsp.OrderId = rsp.GetStringP("cancelInfo/OrderId")
-		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.Status = OrderStatusCancel
 		notifyRsp.Reason = rsp.GetStringP("cancelInfo/Reason")
 		notifyRsp.WaybillNo = rsp.GetStringP("cancelInfo/BillCode")
 	case EventOrderUpdateFetchTime:
 		notifyRsp.OrderId = rsp.GetStringP("modifyInfo/OrderId")
-		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.Status = OrderStatusAllocated
 		notifyRsp.FetchEndTime = rsp.GetStringP("modifyInfo/FetchEndTime")
 		notifyRsp.FetchStartTime = rsp.GetStringP("modifyInfo/FetchStartTime")
 		notifyRsp.WaybillNo = rsp.GetStringP("modifyInfo/BillCode")
 	case EventOrderRefund:
 		notifyRsp.OrderId = rsp.GetStringP("returnInfo/OrderId")
 		notifyRsp.Reason = rsp.GetStringP("returnInfo/Reason")
-		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.Status = OrderStatusRefund
 	}
 
 	return &notifyRsp, nil

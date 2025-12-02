@@ -18,6 +18,14 @@ const (
 )
 
 const (
+	OrderStatusAllocated  = iota + 1 //已分配
+	OrderStatusDispatched            //已调派
+	OrderStatusCancel     = iota + 2 //已取消
+	OrderStatusCompleted             //已完成
+	OrderStatusRefund                //已打回
+)
+
+const (
 	BaseSandboxUrl = "http://cloudinter-linkgatewaytest.sto.cn/gateway/link.do" //测试
 	BaseUrl        = "https://cloudinter-linkgateway.sto.cn/gateway/link.do"    //正式
 )
