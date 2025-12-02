@@ -44,7 +44,8 @@ const (
 	OrderStatusAccept         = "已接单"
 	OrderStatusCancel         = "已取消" //已取消
 	OrderStatusChangeContract = "改约"  //改约
-	OrderStatusRefund         = "待接单"
+	OrderStatusRefund         = OrderStatusPending
+	OrderStatusPending        = "待接单"
 )
 
 // 解析回调订单信息

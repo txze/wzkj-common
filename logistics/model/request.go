@@ -28,9 +28,10 @@ type CreateOrderReq struct {
 
 // 取消寄件
 type CancelOrderReq struct {
-	OrderId   string `json:"order_id"`   //客户单号 如果是快递100 则传入任务ID
-	WaybillNo string `json:"waybill_no"` //物流单号
-	Remark    string `json:"remark"`     //备注信息
+	ExpressCode string `json:"express_code"` // 快递编码
+	OrderId     string `json:"order_id"`     //客户单号 如果是快递100 则传入任务ID
+	WaybillNo   string `json:"waybill_no"`   //物流单号
+	Remark      string `json:"remark"`       //备注信息
 }
 
 type PickupCodeReq struct {
