@@ -11,6 +11,13 @@ import (
 )
 
 const (
+	EventOrderStatus          = "ORDER_STATUS_CHANGE_NOTIFY"    //接单事件
+	EventOrderCancel          = "ORDER_CANCEL_NOTIFY"           //取消订单事件
+	EventOrderUpdateFetchTime = "ORDER_UPDATE_FETCHTIME_NOTIFY" //修改取件时间事件
+	EventOrderRefund          = "ORDER_RETURN_NOTIFY"           // 打回订单通知
+)
+
+const (
 	BaseSandboxUrl = "http://cloudinter-linkgatewaytest.sto.cn/gateway/link.do" //测试
 	BaseUrl        = "https://cloudinter-linkgateway.sto.cn/gateway/link.do"    //正式
 )

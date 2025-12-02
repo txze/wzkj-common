@@ -51,6 +51,7 @@ type OrderNotifyResp struct {
 	FetchStartTime string `json:"fetch_start_time"` //预约取件开始时间
 	FetchEndTime   string `json:"fetch_end_time"`   //预约取件结束时间
 	PickupCode     string `json:"pickup_code"`      //取件码
+	Reason         string `json:"reason"`           //原因
 }
 
 // 解析物流回调信息

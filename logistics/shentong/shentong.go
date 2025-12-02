@@ -2,8 +2,14 @@ package shentong
 
 import (
 	"fmt"
+	"net/url"
 
+	"github.com/hzxiao/goutil"
+
+	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/logistics/model"
+	"github.com/txze/wzkj-common/pkg/ierr"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 type STOClient struct {
@@ -79,8 +85,60 @@ func (c *STOClient) ParseWebhook(body []byte) (*model.WebhookData, error) {
 }
 
 func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error) {
-	//TODO implement me
-	panic("implement me")
+	logger.Info("ParseOrderNotify request body :", logger.Any("body", string(body)))
+	// 解析为 url.Values
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		logger.Error("ParseOrderNotify request body err:", logger.Any("body", string(body)))
+		return nil, fmt.Errorf("解析请求体失败: %v", err)
+	}
+
+	if values.Get("data_digest") == "" {
+		logger.Info("ParseOrderNotify request body :", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "sign not found :%v", values)
+	}
+
+	sign := generateSign(values.Get("content"), c.cfg.SecretKey)
+	if sign != values.Get("data_digest") {
+		logger.Info("ParseOrderNotify sign fail :", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "sign fail :%v", values)
+	}
+
+	content := values.Get("content")
+	rsp := goutil.Map{}
+	err = util.Json2S(content, &rsp)
+	if err != nil {
+		logger.Error("ParseOrderNotify Json2S content err:", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "ParseOrderNotify json fail :%v", values)
+	}
+
+	notifyRsp := model.OrderNotifyResp{}
+	switch rsp.GetString("event") {
+	case EventOrderStatus:
+		notifyRsp.OrderId = rsp.GetStringP("changeInfo/OrderId")
+		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.PickupCode = rsp.GetStringP("changeInfo/PrintCode")
+		notifyRsp.WaybillNo = rsp.GetStringP("changeInfo/BillCode")
+		notifyRsp.UserMobile = rsp.GetStringP("changeInfo/UserMobile")
+		notifyRsp.UserName = rsp.GetStringP("changeInfo/UserName")
+	case EventOrderCancel:
+		notifyRsp.OrderId = rsp.GetStringP("cancelInfo/OrderId")
+		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.Reason = rsp.GetStringP("cancelInfo/Reason")
+		notifyRsp.WaybillNo = rsp.GetStringP("cancelInfo/BillCode")
+	case EventOrderUpdateFetchTime:
+		notifyRsp.OrderId = rsp.GetStringP("modifyInfo/OrderId")
+		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.FetchEndTime = rsp.GetStringP("modifyInfo/FetchEndTime")
+		notifyRsp.FetchStartTime = rsp.GetStringP("modifyInfo/FetchStartTime")
+		notifyRsp.WaybillNo = rsp.GetStringP("modifyInfo/BillCode")
+	case EventOrderRefund:
+		notifyRsp.OrderId = rsp.GetStringP("returnInfo/OrderId")
+		notifyRsp.Reason = rsp.GetStringP("returnInfo/Reason")
+		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+	}
+
+	return &notifyRsp, nil
 }
 
 func NewSTOClient(cfg *Config) *STOClient {
