@@ -40,11 +40,19 @@ func parseJSON[T any](body []byte, target *T) error {
 	return json.Unmarshal(body, target)
 }
 
+const (
+	OrderStatusAccept         = "已接单"
+	OrderStatusCancel         = "已取消" //已取消
+	OrderStatusChangeContract = "改约"  //改约
+	OrderStatusRefund         = "已下单"
+)
+
 // 解析回调订单信息
 type OrderNotifyResp struct {
 	OrderId        string `json:"order_id"`         //订单ID
 	WaybillNo      string `json:"waybill_no"`       //物流单号
 	Status         string `json:"status"`           //订单调度状态
+	OriginalStatus string `json:"original_status"`  //订单原始调度状态
 	UserCode       string `json:"user_code"`        //接单业务员编号
 	UserName       string `json:"user_name"`        //接单业务员名称
 	UserMobile     string `json:"user_mobile"`      //业务员手机号

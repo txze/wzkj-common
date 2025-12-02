@@ -116,25 +116,29 @@ func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error
 	switch rsp.GetString("event") {
 	case EventOrderStatus:
 		notifyRsp.OrderId = rsp.GetStringP("changeInfo/OrderId")
-		notifyRsp.Status = rsp.GetStringP("changeInfo/Status")
+		notifyRsp.OriginalStatus = rsp.GetStringP("changeInfo/Status")
 		notifyRsp.PickupCode = rsp.GetStringP("changeInfo/PrintCode")
 		notifyRsp.WaybillNo = rsp.GetStringP("changeInfo/BillCode")
 		notifyRsp.UserMobile = rsp.GetStringP("changeInfo/UserMobile")
 		notifyRsp.UserName = rsp.GetStringP("changeInfo/UserName")
+		notifyRsp.Status = model.OrderStatusAccept
 	case EventOrderCancel:
 		notifyRsp.OrderId = rsp.GetStringP("cancelInfo/OrderId")
-		notifyRsp.Status = OrderStatusCancel.ToString()
+		notifyRsp.OriginalStatus = OrderStatusCancel.ToString()
 		notifyRsp.Reason = rsp.GetStringP("cancelInfo/Reason")
 		notifyRsp.WaybillNo = rsp.GetStringP("cancelInfo/BillCode")
+		notifyRsp.Status = model.OrderStatusCancel
 	case EventOrderUpdateFetchTime:
 		notifyRsp.OrderId = rsp.GetStringP("modifyInfo/OrderId")
 		notifyRsp.FetchEndTime = rsp.GetStringP("modifyInfo/FetchEndTime")
 		notifyRsp.FetchStartTime = rsp.GetStringP("modifyInfo/FetchStartTime")
 		notifyRsp.WaybillNo = rsp.GetStringP("modifyInfo/BillCode")
+		notifyRsp.Status = model.OrderStatusChangeContract
 	case EventOrderRefund:
 		notifyRsp.OrderId = rsp.GetStringP("returnInfo/OrderId")
 		notifyRsp.Reason = rsp.GetStringP("returnInfo/Reason")
-		notifyRsp.Status = OrderStatusRefund.ToString()
+		notifyRsp.OriginalStatus = OrderStatusRefund.ToString()
+		notifyRsp.Status = model.OrderStatusRefund
 	}
 
 	return &notifyRsp, nil
