@@ -17,13 +17,19 @@ const (
 	EventOrderRefund          = "ORDER_RETURN_NOTIFY"           // 打回订单通知
 )
 
+type ExpressOrderStatus int
+
 const (
-	OrderStatusAllocated  = iota + 1 //已分配
-	OrderStatusDispatched            //已调派
-	OrderStatusCancel     = iota + 2 //已取消
-	OrderStatusCompleted             //已完成
-	OrderStatusRefund                //已打回
+	OrderStatusAllocated  ExpressOrderStatus = 1 //已分配
+	OrderStatusDispatched ExpressOrderStatus = 2 //已调派
+	OrderStatusCancel     ExpressOrderStatus = 4 //已取消
+	OrderStatusCompleted  ExpressOrderStatus = 5 //已完成
+	OrderStatusRefund     ExpressOrderStatus = 6 //已打回
 )
+
+func (s ExpressOrderStatus) ToString() string {
+	return goutil.String(s)
+}
 
 const (
 	BaseSandboxUrl = "http://cloudinter-linkgatewaytest.sto.cn/gateway/link.do" //测试
