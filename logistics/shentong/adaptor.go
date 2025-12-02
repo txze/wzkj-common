@@ -137,7 +137,13 @@ type SubscribeTrackingAdaptor struct {
 
 func (c *SubscribeTrackingAdaptor) ConvertRequest(req *model.SubscribeTrackingReq) goutil.Map {
 	return goutil.Map{
-		"waybillNo": req.WaybillNo,
+		"subscribeInfoList": []goutil.Map{
+			{
+				"subscribeInfo": goutil.Map{
+					"waybillNo": req.WaybillNo,
+				},
+			},
+		},
 	}
 }
 
