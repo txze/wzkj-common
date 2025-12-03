@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"errors"
+
+	"github.com/hzxiao/goutil"
 )
 
 type QueryResp struct {
@@ -65,9 +67,10 @@ type OrderNotifyResp struct {
 
 // 解析物流回调信息
 type WebhookData struct {
-	OrderId   string `json:"order_id"`   //订单ID
-	WaybillNo string `json:"waybill_no"` //物流单号
-	ScanType  string `json:"scan_type"`  //物流状态
+	OrderId   string     `json:"order_id"`   //订单ID
+	WaybillNo string     `json:"waybill_no"` //物流单号
+	ScanType  string     `json:"scan_type"`  //物流状态
+	Data      goutil.Map `json:"data"`
 }
 
 type PriceQuote struct {

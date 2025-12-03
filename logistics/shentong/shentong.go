@@ -80,8 +80,41 @@ func (c *STOClient) CancelOrder(req *model.CancelOrderReq) error {
 }
 
 func (c *STOClient) ParseWebhook(body []byte) (*model.WebhookData, error) {
-	fmt.Println("body:", string(body))
-	return nil, nil
+	logger.Info("ParseWebhook request body :", logger.Any("body", string(body)))
+	// 解析为 url.Values
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		logger.Error("ParseWebhook request body err:", logger.Any("body", string(body)))
+		return nil, fmt.Errorf("解析请求体失败: %v", err)
+	}
+
+	if values.Get("data_digest") == "" {
+		logger.Info("ParseWebhook request body :", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "sign not found :%v", values)
+	}
+
+	sign := generateSign(values.Get("content"), c.cfg.SecretKey)
+	if sign != values.Get("data_digest") {
+		logger.Info("ParseWebhook sign fail :", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "sign fail :%v", values)
+	}
+
+	content := values.Get("content")
+	rsp := goutil.Map{}
+	err = util.Json2S(content, &rsp)
+	if err != nil {
+		logger.Error("ParseWebhook Json2S content err:", logger.Any("body", string(body)))
+		return nil, ierr.NewIErrorf(ierr.InternalError, "ParseOrderNotify json fail :%v", values)
+	}
+
+	var ret = model.WebhookData{
+		OrderId:   "",
+		WaybillNo: rsp.GetStringP("waybillNo"),
+		ScanType:  rsp.GetStringP("scanType"),
+		Data:      rsp,
+	}
+
+	return &ret, nil
 }
 
 func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error) {
