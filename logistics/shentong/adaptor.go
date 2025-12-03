@@ -149,6 +149,14 @@ func (c *SubscribeTrackingAdaptor) ParseResponse(rspMap goutil.Map) error {
 	if rspMap.GetString("success") == SUCCESS_FALSE {
 		return ierr.NewIError(ierr.ParamErr, fmt.Sprintf("API错误: %s(%s); data: %v", rspMap.Get("errorMsg"), rspMap.Get("errorCode"), rspMap))
 	}
+
+	subscribeList := rspMap.GetMapArray("data")
+	for _, m := range subscribeList {
+		if m.GetString("status") == SUCCESS_FALSE {
+			return ierr.NewIError(ierr.ParamErr, fmt.Sprintf("API错误: %s(%s); data: %v", m.GetString("waybillNo"), rspMap.Get("message"), rspMap))
+		}
+	}
+
 	return nil
 }
 
