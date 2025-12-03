@@ -116,7 +116,7 @@ func (c *STOClient) ParseWebhook(body []byte) (*model.WebhookData, error) {
 	var ret = model.WebhookData{
 		OrderId:   "",
 		WaybillNo: rsp.GetStringP("waybillNo"),
-		ScanType:  rsp.GetStringP("scanType"),
+		ScanType:  rsp.GetStringP("trace/scanType"),
 		OpTime:    t,
 		Data:      rsp,
 	}
