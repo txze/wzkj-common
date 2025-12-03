@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/hzxiao/goutil"
+	"github.com/jinzhu/now"
 
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/logistics/model"
@@ -107,10 +108,16 @@ func (c *STOClient) ParseWebhook(body []byte) (*model.WebhookData, error) {
 		return nil, ierr.NewIErrorf(ierr.InternalError, "ParseOrderNotify json fail :%v", values)
 	}
 
+	t, err := now.Parse(rsp.GetStringP("trace/opTime"))
+	if err != nil {
+		logger.Error("ParseWebhook parse trace/opTime err:", logger.Any("body", string(body)))
+	}
+
 	var ret = model.WebhookData{
 		OrderId:   "",
 		WaybillNo: rsp.GetStringP("waybillNo"),
 		ScanType:  rsp.GetStringP("scanType"),
+		OpTime:    t,
 		Data:      rsp,
 	}
 

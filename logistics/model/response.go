@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/hzxiao/goutil"
 )
@@ -70,6 +71,7 @@ type WebhookData struct {
 	OrderId   string     `json:"order_id"`   //订单ID
 	WaybillNo string     `json:"waybill_no"` //物流单号
 	ScanType  string     `json:"scan_type"`  //物流状态
+	OpTime    time.Time  `json:"op_time"`
 	Data      goutil.Map `json:"data"`
 }
 
