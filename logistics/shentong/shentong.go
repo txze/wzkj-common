@@ -161,7 +161,11 @@ func (c *STOClient) ParseOrderNotify(body []byte) (*model.OrderNotifyResp, error
 		notifyRsp.WaybillNo = rsp.GetStringP("changeInfo/BillCode")
 		notifyRsp.UserMobile = rsp.GetStringP("changeInfo/UserMobile")
 		notifyRsp.UserName = rsp.GetStringP("changeInfo/UserName")
-		notifyRsp.Status = model.OrderStatusAccept
+		if notifyRsp.OriginalStatus == OrderStatusCompleted.ToString() {
+			notifyRsp.Status = model.OrderStatusPicked
+		} else {
+			notifyRsp.Status = model.OrderStatusAccept
+		}
 	case EventOrderCancel:
 		notifyRsp.OrderId = rsp.GetStringP("cancelInfo/OrderId")
 		notifyRsp.OriginalStatus = OrderStatusCancel.ToString()

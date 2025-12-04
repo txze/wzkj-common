@@ -45,6 +45,7 @@ func parseJSON[T any](body []byte, target *T) error {
 
 const (
 	OrderStatusAccept         = "已接单"
+	OrderStatusPicked         = "已取件"
 	OrderStatusCancel         = "已取消" //已取消
 	OrderStatusChangeContract = "改约"  //改约
 	OrderStatusRefund         = OrderStatusPending
