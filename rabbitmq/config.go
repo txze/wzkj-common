@@ -8,9 +8,10 @@ type RabbitMQConf struct {
 }
 
 // NewRabbitMQByInternalConf 直接读取nacos的配置，初始化rabbitmq.
-func NewRabbitMQWithConfig(serverName string, host, user, pwd string) *RabbitMQ {
+func NewRabbitMQWithConfig(serverName string, host, user, pwd, vhost string, disableTLS bool) *RabbitMQ {
 	var opts []Option
 	opts = append(opts, WithHost(host), WithUser(user), WithPwd(pwd))
+	opts = append(opts, WithDisableTLS(disableTLS))
 	return NewRabbitMQ(
 		serverName,
 		opts...,
