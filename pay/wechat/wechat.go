@@ -145,7 +145,7 @@ func (w *Wechat) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
 			// 退款金额:单位是分
 			bm.Set("refund", request.Amount). //实际退款金额
-								Set("total", request.Amount). // 折扣前总金额（不是实际退款数）
+								Set("total", request.Total). // 折扣前总金额（不是实际退款数）
 								Set("currency", "CNY")
 		})
 	refund, err := w.client.V3Refund(ctx, bm)
