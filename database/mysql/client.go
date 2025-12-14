@@ -58,8 +58,8 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 		return c, err
 	}
 
-	sqlMasterDB.SetMaxIdleConns(10)
-	sqlMasterDB.SetMaxOpenConns(100)
+	sqlMasterDB.SetMaxIdleConns(5)
+	sqlMasterDB.SetMaxOpenConns(10)
 	sqlMasterDB.SetConnMaxLifetime(time.Hour)
 
 	// slave dial
@@ -78,7 +78,7 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	}
 
 	sqlSlaveDB.SetMaxIdleConns(10)
-	sqlSlaveDB.SetMaxOpenConns(100)
+	sqlSlaveDB.SetMaxOpenConns(30)
 	sqlSlaveDB.SetConnMaxLifetime(time.Hour)
 
 	return c, nil
