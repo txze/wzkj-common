@@ -42,25 +42,25 @@ func Dial(name string, dialect string) *GormClient {
 
 func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	var err error
-	// master dial
-	c.master, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
-		DisableForeignKeyConstraintWhenMigrating: true,
-		Logger:                                   NewGormLogger(),
-	})
-	if err != nil {
-		return c, err
-	}
-	c.master.Logger.LogMode(logger.Info)
-	c.master = c.master.Debug()
+	// // master dial
+	// c.master, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
+	// 	DisableForeignKeyConstraintWhenMigrating: true,
+	// 	Logger:                                   NewGormLogger(),
+	// })
+	// if err != nil {
+	// 	return c, err
+	// }
+	// c.master.Logger.LogMode(logger.Info)
+	// c.master = c.master.Debug()
 
-	sqlMasterDB, err := c.master.DB()
-	if err != nil {
-		return c, err
-	}
+	// sqlMasterDB, err := c.master.DB()
+	// if err != nil {
+	// 	return c, err
+	// }
 
-	sqlMasterDB.SetMaxIdleConns(5)
-	sqlMasterDB.SetMaxOpenConns(10)
-	sqlMasterDB.SetConnMaxLifetime(time.Hour)
+	// sqlMasterDB.SetMaxIdleConns(5)
+	// sqlMasterDB.SetMaxOpenConns(10)
+	// sqlMasterDB.SetConnMaxLifetime(time.Hour)
 
 	// slave dial
 	c.slave, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
@@ -80,6 +80,8 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 	sqlSlaveDB.SetMaxIdleConns(10)
 	sqlSlaveDB.SetMaxOpenConns(30)
 	sqlSlaveDB.SetConnMaxLifetime(time.Hour)
+
+	c.master = c.slave
 
 	return c, nil
 }
