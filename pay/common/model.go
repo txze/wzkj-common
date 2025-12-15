@@ -40,6 +40,8 @@ type RefundResponse struct {
 	OriginalRefundStatus string `json:"original_refund_status"` // 退款状态
 	RefundStatus         bool   `json:"refund_status"`          // 退款状态
 	Message              string `json:"message"`                //错误信息
+	RefundAmount         int    `json:"amount"`
+	Data                 any    `json:"data"` // 退款数据
 }
 
 type RefundOrderResponse struct {

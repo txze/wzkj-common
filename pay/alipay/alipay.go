@@ -46,6 +46,17 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		successTime = aliRsp.Response.DepositBackInfo.EstBankReceiptTime
 		createTime = aliRsp.Response.GmtRefundPay
 	}
+
+	var refundAmountInt = 0
+	if aliRsp.Response.RefundStatus == "REFUND_SUCCESS" {
+		refundAmount, err := decimal.NewFromString(aliRsp.Response.RefundAmount)
+		if err != nil {
+			return nil, err
+		}
+
+		refundAmountInt = int(refundAmount.Mul(decimal.NewFromInt(100)).IntPart())
+	}
+
 	return &common.RefundResponse{
 		UserReceivedAccount:  "",
 		SuccessTime:          successTime,
@@ -53,6 +64,8 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		RefundStatus:         aliRsp.Response.RefundStatus == "REFUND_SUCCESS",
 		OriginalRefundStatus: aliRsp.Response.RefundStatus,
 		Message:              aliRsp.Response.Msg,
+		RefundAmount:         refundAmountInt,
+		Data:                 aliRsp,
 	}, nil
 }
 

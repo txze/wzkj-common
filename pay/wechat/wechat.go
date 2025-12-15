@@ -44,6 +44,8 @@ func (w *Wechat) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		OriginalRefundStatus: wxRsp.Response.Status,
 		RefundStatus:         wxRsp.Response.Status == gopay.SUCCESS,
 		Message:              wxRsp.Error,
+		RefundAmount:         wxRsp.Response.Amount.Refund,
+		Data:                 wxRsp.Response,
 	}, nil
 }
 
