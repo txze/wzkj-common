@@ -166,7 +166,7 @@ type QueryLogisticsAdaptor struct {
 
 func (q *QueryLogisticsAdaptor) ConvertRequest(req *model.QueryLogisticsRequest) goutil.Map {
 	data := goutil.Map{
-		"order":         "desc",
+		"order":         "asc",
 		"waybillNoList": []string{req.WaybillNo},
 	}
 	return data
