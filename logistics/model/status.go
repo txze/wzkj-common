@@ -16,6 +16,7 @@ var StatusCodeMapping = map[string]int{
 	"转邮":    7,
 	"转同行":   7,
 	"签收":    3,
+	"客户签收":  3,
 }
 
 // StatusGroup 每个物流状态分组
