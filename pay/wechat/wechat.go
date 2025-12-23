@@ -102,17 +102,22 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		return nil, err
 	}
 	t, _ := time.Parse(time.RFC3339, result.SuccessTime)
+	discountAmount := 0
+	for _, detail := range result.PromotionDetail {
+		discountAmount += detail.Amount
+	}
 	return &common.UnifiedResponse{
-		Platform:    w.GetType(),
-		OrderID:     result.OutTradeNo,
-		PlatformID:  result.TransactionId,
-		Amount:      result.Amount.Total,
-		Status:      result.TradeState == gopay.SUCCESS,
-		TradeStatus: result.TradeState,
-		PaidAmount:  result.Amount.PayerTotal,
-		PaidTime:    t,
-		Params:      result.Attach,
-		Message:     result,
+		Platform:       w.GetType(),
+		OrderID:        result.OutTradeNo,
+		PlatformID:     result.TransactionId,
+		Amount:         result.Amount.Total,
+		Status:         result.TradeState == gopay.SUCCESS,
+		TradeStatus:    result.TradeState,
+		PaidAmount:     result.Amount.PayerTotal,
+		PaidTime:       t,
+		Params:         result.Attach,
+		Message:        result,
+		DiscountAmount: discountAmount,
 	}, nil
 }
 

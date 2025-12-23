@@ -14,6 +14,7 @@ import (
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pkg/ierr"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 type Alipay struct {
@@ -165,17 +166,38 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		return nil, err
 	}
 	t, _ := now.Parse(time.DateTime, bm.GetString("gmt_payment"))
+
+	discountAmount := 0
+	voucherDetailList := bm.GetString("voucher_detail_list")
+	if voucherDetailList != "" {
+		var voucherDetailListResp []alipay.NotifyVoucherDetail
+		err = util.Json2S(voucherDetailList, &voucherDetailListResp)
+		if err != nil {
+			logger.FromContext(req.Context()).Error("alipay verify notification error: " + err.Error())
+		} else {
+			for _, detail := range voucherDetailListResp {
+				discount, err := decimal.NewFromString(detail.Amount)
+				if err != nil {
+					logger.FromContext(req.Context()).Error("alipay verify notification error: " + err.Error())
+				} else {
+					discountAmount += int(discount.Mul(decimal.NewFromInt(100)).IntPart())
+				}
+			}
+		}
+	}
+
 	return &common.UnifiedResponse{
-		Platform:    a.GetType(),
-		OrderID:     bm.GetString("out_trade_no"),
-		PlatformID:  bm.GetString("trade_no"),
-		Amount:      int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
-		Status:      bm.GetString("trade_status") == "TRADE_SUCCESS",
-		TradeStatus: bm.GetString("trade_status"),
-		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
-		PaidTime:    t,
-		Params:      bm.GetString("passback_params"),
-		Message:     bm,
+		Platform:       a.GetType(),
+		OrderID:        bm.GetString("out_trade_no"),
+		PlatformID:     bm.GetString("trade_no"),
+		Amount:         int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		Status:         bm.GetString("trade_status") == "TRADE_SUCCESS",
+		TradeStatus:    bm.GetString("trade_status"),
+		PaidAmount:     int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		PaidTime:       t,
+		Params:         bm.GetString("passback_params"),
+		Message:        bm,
+		DiscountAmount: discountAmount,
 	}, nil
 }
 

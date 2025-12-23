@@ -12,16 +12,17 @@ type PaymentRequest struct {
 }
 
 type UnifiedResponse struct {
-	Platform    string    `json:"platform"`     // 支付平台
-	OrderID     string    `json:"order_id"`     // 商户订单号
-	PlatformID  string    `json:"platform_id"`  // 平台订单号
-	Amount      int       `json:"amount"`       // 订单金额
-	Status      bool      `json:"status"`       // 支付状态是否成功
-	TradeStatus string    `json:"trade_status"` //第三方支付状态
-	PaidAmount  int       `json:"paid_amount"`  // 实付金额
-	PaidTime    time.Time `json:"paid_time"`    // 支付时间
-	Message     any       `json:"message"`      // 返回消息
-	Params      string    `json:"params"`       //回传参数
+	Platform       string    `json:"platform"`        // 支付平台
+	OrderID        string    `json:"order_id"`        // 商户订单号
+	PlatformID     string    `json:"platform_id"`     // 平台订单号
+	Amount         int       `json:"amount"`          // 订单金额
+	Status         bool      `json:"status"`          // 支付状态是否成功
+	TradeStatus    string    `json:"trade_status"`    //第三方支付状态
+	PaidAmount     int       `json:"paid_amount"`     // 实付金额
+	PaidTime       time.Time `json:"paid_time"`       // 支付时间
+	Message        any       `json:"message"`         // 返回消息
+	Params         string    `json:"params"`          //回传参数
+	DiscountAmount int       `json:"discount_amount"` // 优惠金额
 }
 
 type RefundRequest struct {
