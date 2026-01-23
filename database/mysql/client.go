@@ -24,10 +24,10 @@ func NewClient() *GormClient {
 var Client *GormClient
 var clientMap = map[string]*GormClient{}
 
-func Dial(name string, dialect string) *GormClient {
+func Dial(name string, dialect string, idle, max int) *GormClient {
 	Client = NewClient()
 	log.Info("MYSQL will start dial server...")
-	gormClient, err := Client.Dial(dialect)
+	gormClient, err := Client.Dial(dialect, idle, max)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func Dial(name string, dialect string) *GormClient {
 	return gormClient
 }
 
-func (c *GormClient) Dial(dialect string) (*GormClient, error) {
+func (c *GormClient) Dial(dialect string, idle, max int) (*GormClient, error) {
 	var err error
 	// // master dial
 	// c.master, err = gorm.Open(mysql.Open(dialect), &gorm.Config{
@@ -77,8 +77,14 @@ func (c *GormClient) Dial(dialect string) (*GormClient, error) {
 		return c, err
 	}
 
-	sqlSlaveDB.SetMaxIdleConns(10)
-	sqlSlaveDB.SetMaxOpenConns(30)
+	if idle <= 0 {
+		idle = 10
+	}
+	if max <= 0 {
+		max = 50
+	}
+	sqlSlaveDB.SetMaxIdleConns(idle)
+	sqlSlaveDB.SetMaxOpenConns(max)
 	sqlSlaveDB.SetConnMaxLifetime(time.Hour)
 
 	c.master = c.slave
