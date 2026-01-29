@@ -4,6 +4,9 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/go-pay/gopay"
+	"github.com/hzxiao/goutil"
+
 	"github.com/txze/wzkj-common/pay/common"
 )
 
@@ -18,7 +21,7 @@ type PaymentStrategy interface {
 	VerifyNotification(req *http.Request) (*common.UnifiedResponse, error)
 
 	// QueryPayment 查询支付状态
-	QueryPayment(orderID string) (*common.UnifiedResponse, error)
+	QueryPayment(ctx context.Context, orderID string) (*common.UnifiedResponse, error)
 
 	// Refund 退款
 	Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error)
@@ -32,10 +35,13 @@ type PaymentStrategy interface {
 	// VerifySign 验证签名
 	VerifySign(params map[string]interface{}) (bool, error)
 
-	Close(orderId string) (bool, error)
+	Close(ctx context.Context, orderId string) (bool, error)
 
 	// GetType 获取支付类型
 	GetType() string
+
+	// MergePay 合并支付
+	MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
 }
 
 type Payment struct {

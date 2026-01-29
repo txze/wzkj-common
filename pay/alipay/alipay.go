@@ -2,11 +2,13 @@ package alipay
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
+	"github.com/hzxiao/goutil"
 	"github.com/jinzhu/now"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -22,6 +24,29 @@ type Alipay struct {
 	config AlipayConfig
 }
 
+// 处理支付宝业务错误
+func (a *Alipay) handleBizError(ctx context.Context, err error, operation string) error {
+	if bizErr, ok := alipay.IsBizError(err); ok {
+		logger.FromContext(ctx).Error(operation, logger.Any("error", bizErr))
+		return ierr.NewIError(ierr.InternalError, bizErr.Error())
+	}
+	return err
+}
+
+// 将金额转换为分
+func amountToCents(amountStr string) (int, error) {
+	amount, err := decimal.NewFromString(amountStr)
+	if err != nil {
+		return 0, err
+	}
+	return int(amount.Mul(decimal.NewFromInt(100)).IntPart()), nil
+}
+
+// 将分转换为元
+func centsToAmount(cents int64) string {
+	return decimal.NewFromInt(cents).Div(decimal.NewFromInt(100)).String()
+}
+
 func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error) {
 	bm := make(gopay.BodyMap)
 	bm.
@@ -31,16 +56,14 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 			"deposit_back_info",
 			"gmt_refund_pay",
 		})
+
 	aliRsp, err := a.client.TradeFastPayRefundQuery(ctx, bm)
 	if err != nil {
-		if bizErr, ok := alipay.IsBizError(err); ok {
-			logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", bizErr))
-			// do something
-			return nil, ierr.NewIError(ierr.InternalError, bizErr.Error())
-		}
-		return nil, err
+		return nil, a.handleBizError(ctx, err, "alipay query refund")
 	}
-	logger.FromContext(ctx).Info("alipay query refund ", logger.Any("aliRsp", aliRsp))
+
+	logger.FromContext(ctx).Info("alipay query refund", logger.Any("aliRsp", aliRsp))
+
 	successTime := aliRsp.Response.GmtRefundPay
 	createTime := ""
 	if aliRsp.Response.DepositBackInfo.EstBankReceiptTime != "" {
@@ -48,14 +71,9 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 		createTime = aliRsp.Response.GmtRefundPay
 	}
 
-	var refundAmountInt = 0
-	if aliRsp.Response.RefundStatus == "REFUND_SUCCESS" {
-		refundAmount, err := decimal.NewFromString(aliRsp.Response.RefundAmount)
-		if err != nil {
-			return nil, err
-		}
-
-		refundAmountInt = int(refundAmount.Mul(decimal.NewFromInt(100)).IntPart())
+	refundAmountInt, err := amountToCents(aliRsp.Response.RefundAmount)
+	if err != nil {
+		return nil, err
 	}
 
 	return &common.RefundResponse{
@@ -73,36 +91,30 @@ func (a *Alipay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*co
 func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error) {
 	// 请求参数
 	bm := make(gopay.BodyMap)
-	result := decimal.NewFromInt(int64(request.Amount)).Div(decimal.NewFromInt(100))
 	bm.Set("out_trade_no", request.OrderNo).
-		Set("refund_amount", result.String()).
+		Set("refund_amount", centsToAmount(int64(request.Amount))).
 		Set("refund_reason", request.GoodsName).
 		Set("out_request_no", request.RefundNo)
 
 	// 发起退款请求
 	aliRsp, err := a.client.TradeRefund(ctx, bm)
 	if err != nil {
-		if bizErr, ok := alipay.IsBizError(err); ok {
-			logger.FromContext(ctx).Error("alipay refund ", logger.Any("error", bizErr))
-			// do something
-			return nil, err
-		}
-		return nil, err
+		return nil, a.handleBizError(ctx, err, "alipay refund")
 	}
 
 	queryRefund, err := a.QueryRefund(ctx, request.RefundNo, request.OrderNo)
 	if err != nil {
-		logger.FromContext(ctx).Error("alipay query refund ", logger.Any("error", err))
+		logger.FromContext(ctx).Error("alipay query refund", logger.Any("error", err))
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
 
 	if !queryRefund.RefundStatus {
-		logger.FromContext(ctx).Error("alipay refund ", logger.Any("error", queryRefund.RefundStatus))
+		logger.FromContext(ctx).Error("alipay refund", logger.Any("status", queryRefund.RefundStatus))
 		return nil, ierr.NewIError(ierr.InternalError, "退款失败:"+queryRefund.Message)
 	}
 
 	logger.FromContext(ctx).Info("alipay refund success", logger.Any("data", *aliRsp))
-	refundFee, err := decimal.NewFromString(aliRsp.Response.RefundFee)
+	refundFeeInt, err := amountToCents(aliRsp.Response.RefundFee)
 	if err != nil {
 		return nil, err
 	}
@@ -117,33 +129,35 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		CreateTime:          queryRefund.CreateTime,
 		Status:              queryRefund.OriginalRefundStatus,
 		IsSuccess:           queryRefund.RefundStatus,
-		PayerRefund:         int(refundFee.Mul(decimal.NewFromInt(100)).IntPart()),
+		PayerRefund:         refundFeeInt,
 		RefundInfo:          aliRsp,
 	}, nil
 }
 
+// 普通支付
 func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
-	result := decimal.NewFromInt(int64(request.Amount)).Div(decimal.NewFromInt(100))
-	//配置公共参数
+	// 配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2).
 		SetNotifyUrl(a.config.NotifyUrl)
 
-	//请求参数
+	// 请求参数
 	bm := make(gopay.BodyMap)
 	bm.Set("subject", request.GoodsName)
 	bm.Set("out_trade_no", request.OrderNo)
-	bm.Set("total_amount", result.String())
+	bm.Set("total_amount", centsToAmount(int64(request.Amount)))
 	bm.Set("passback_params", request.Params)
-	//手机APP支付参数请求
-	payParam, err := a.client.TradeAppPay(context.Background(), bm)
+
+	// 手机APP支付参数请求
+	payParam, err := a.client.TradeAppPay(ctx, bm)
 	if err != nil {
-		logger.FromContext(ctx).Error("alipay error: " + err.Error())
+		logger.FromContext(ctx).Error("alipay error", logger.Any("error", err))
 		return nil, err
 	}
+
 	rsp := make(map[string]interface{})
 	rsp["orderStr"] = payParam
-	return rsp, err
+	return rsp, nil
 }
 
 func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse, error) {
@@ -152,19 +166,22 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	if err != nil {
 		return nil, err
 	}
+
 	_, err = a.VerifySign(bm)
 	if err != nil {
 		return nil, err
 	}
-	totalAmount, err := decimal.NewFromString(bm.GetString("total_amount"))
+
+	totalAmountInt, err := amountToCents(bm.GetString("total_amount"))
 	if err != nil {
 		return nil, err
 	}
 
-	buyerPayAmount, err := decimal.NewFromString(bm.GetString("buyer_pay_amount"))
+	buyerPayAmountInt, err := amountToCents(bm.GetString("buyer_pay_amount"))
 	if err != nil {
 		return nil, err
 	}
+
 	t, _ := now.Parse(time.DateTime, bm.GetString("gmt_payment"))
 
 	discountAmount := 0
@@ -173,14 +190,14 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		var voucherDetailListResp []alipay.NotifyVoucherDetail
 		err = util.Json2S(voucherDetailList, &voucherDetailListResp)
 		if err != nil {
-			logger.FromContext(req.Context()).Error("alipay verify notification error: " + err.Error())
+			logger.FromContext(req.Context()).Error("alipay verify notification error", logger.Any("error", err))
 		} else {
 			for _, detail := range voucherDetailListResp {
-				discount, err := decimal.NewFromString(detail.Amount)
+				discountInt, err := amountToCents(detail.Amount)
 				if err != nil {
-					logger.FromContext(req.Context()).Error("alipay verify notification error: " + err.Error())
+					logger.FromContext(req.Context()).Error("alipay verify notification error", logger.Any("error", err))
 				} else {
-					discountAmount += int(discount.Mul(decimal.NewFromInt(100)).IntPart())
+					discountAmount += discountInt
 				}
 			}
 		}
@@ -190,10 +207,10 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		Platform:       a.GetType(),
 		OrderID:        bm.GetString("out_trade_no"),
 		PlatformID:     bm.GetString("trade_no"),
-		Amount:         int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		Amount:         totalAmountInt,
 		Status:         bm.GetString("trade_status") == "TRADE_SUCCESS",
 		TradeStatus:    bm.GetString("trade_status"),
-		PaidAmount:     int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		PaidAmount:     buyerPayAmountInt,
 		PaidTime:       t,
 		Params:         bm.GetString("passback_params"),
 		Message:        bm,
@@ -201,38 +218,37 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	}, nil
 }
 
-func (a *Alipay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
-	//请求参数
+func (a *Alipay) QueryPayment(ctx context.Context, orderID string) (*common.UnifiedResponse, error) {
+	// 请求参数
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", orderID)
 
-	//查询订单
-	aliRsp, err := a.client.TradeQuery(context.Background(), bm)
+	// 查询订单
+	aliRsp, err := a.client.TradeQuery(ctx, bm)
 	if err != nil {
-		if bizErr, ok := alipay.IsBizError(err); ok {
-			return nil, bizErr
-		}
-		return nil, err
+		return nil, a.handleBizError(ctx, err, "alipay query payment")
 	}
 
-	totalAmount, err := decimal.NewFromString(aliRsp.Response.TotalAmount)
+	totalAmountInt, err := amountToCents(aliRsp.Response.TotalAmount)
 	if err != nil {
 		return nil, err
 	}
 
-	buyerPayAmount, err := decimal.NewFromString(aliRsp.Response.BuyerPayAmount)
+	buyerPayAmountInt, err := amountToCents(aliRsp.Response.BuyerPayAmount)
 	if err != nil {
 		return nil, err
 	}
+
 	t, _ := now.Parse(time.DateTime, aliRsp.Response.SendPayDate)
+
 	return &common.UnifiedResponse{
 		Platform:    a.GetType(),
 		OrderID:     aliRsp.Response.OutTradeNo,
 		PlatformID:  aliRsp.Response.TradeNo,
-		Amount:      int(totalAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		Amount:      totalAmountInt,
 		Status:      aliRsp.Response.TradeStatus == "TRADE_SUCCESS",
 		TradeStatus: aliRsp.Response.TradeStatus,
-		PaidAmount:  int(buyerPayAmount.Mul(decimal.NewFromInt(100)).IntPart()),
+		PaidAmount:  buyerPayAmountInt,
 		PaidTime:    t,
 		Message:     aliRsp,
 	}, nil
@@ -248,29 +264,67 @@ func (a *Alipay) VerifySign(params map[string]interface{}) (bool, error) {
 	if err != nil {
 		return false, errors.Errorf("alipay.VerifySign err: %s", err.Error())
 	}
-	if ok == false {
+	if !ok {
 		return false, errors.New("alipay.VerifySign err")
 	}
 	return ok, nil
 }
 
-func (a *Alipay) Close(orderId string) (bool, error) {
+func (a *Alipay) Close(ctx context.Context, orderId string) (bool, error) {
 	// 请求参数
 	bm := make(gopay.BodyMap)
 	bm.Set("out_trade_no", orderId)
 
-	// 撤销支付订单
-	aliRsp, err := a.client.TradeClose(context.Background(), bm)
+	// 关闭支付订单
+	aliRsp, err := a.client.TradeClose(ctx, bm)
 	if err != nil {
-		if bizErr, ok := alipay.IsBizError(err); ok {
-			return false, bizErr
-		}
-		return false, err
+		return false, a.handleBizError(ctx, err, "alipay close order")
 	}
+
 	if aliRsp.Response.Code != "10000" {
 		return false, errors.Errorf("alipay error: %s", aliRsp.Response.Msg)
 	}
+
 	return true, nil
+}
+
+func (a *Alipay) MergePay(ctx context.Context, bm gopay.BodyMap) (goutil.Map, error) {
+	// 参数验证
+	if bm.GetString("out_merge_no") == gopay.NULL {
+		return nil, errors.New("out_merge_no is required")
+	}
+
+	// 配置公共参数
+	a.client.SetCharset("utf-8").
+		SetSignType(alipay.RSA2).
+		SetNotifyUrl(a.config.NotifyUrl)
+
+	// 发起合单支付请求
+	bs, err := a.client.DoAliPay(ctx, bm, "alipay.trade.merge.precreate")
+	if err != nil {
+		return nil, err
+	}
+
+	// 解析响应参数
+	var aliRsp *TradeMergePrecreateResponse
+	aliRsp = new(TradeMergePrecreateResponse)
+	if err = json.Unmarshal(bs, &aliRsp); err != nil || aliRsp.Response == nil {
+		return nil, errors.Errorf("[%v], bytes: %s", gopay.UnmarshalErr, string(bs))
+	}
+
+	// 检查业务错误
+	if aliRsp.Response.Code != "10000" {
+		return nil, errors.Errorf("alipay error: %s", aliRsp.Response.Msg)
+	}
+
+	// 返回响应数据
+	responseMap := goutil.Map{
+		"out_merge_no":         aliRsp.Response.OutMergeNo,
+		"pre_order_no":         aliRsp.Response.PreOrderNo,
+		"order_detail_results": aliRsp.Response.OrderDetailResults,
+	}
+
+	return responseMap, nil
 }
 
 func (a *Alipay) GetType() string {
@@ -282,10 +336,12 @@ func NewAlipay(cfg AlipayConfig) (*Alipay, error) {
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
+
 	err = client.SetCertSnByContent(cfg.AppCertContent, cfg.AliPayRootCertContent, cfg.AliPayPublicCertContent)
 	if err != nil {
 		return nil, ierr.NewIError(ierr.InternalError, err.Error())
 	}
+
 	return &Alipay{
 		client: client,
 		config: cfg,
