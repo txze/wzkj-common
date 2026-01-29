@@ -1,14 +1,21 @@
 package common
 
-import "time"
+import (
+	"time"
+
+	"github.com/hzxiao/goutil"
+)
 
 type PaymentRequest struct {
-	OrderNo   string `json:"order_no"`   //商户订单号
-	Expire    string `json:"expire"`     //过期时间
-	Amount    int    `json:"amount"`     //支付金额
-	Currency  string `json:"currency"`   //支付货币
-	GoodsName string `json:"goods_name"` //商品名
-	Params    string `json:"params"`     //回传参数
+	OrderNo           string     `json:"order_no"`            //商户订单号
+	Expire            string     `json:"expire"`              //过期时间
+	Amount            int        `json:"amount"`              //支付金额
+	Currency          string     `json:"currency"`            //支付货币
+	GoodsName         string     `json:"goods_name"`          //商品名
+	Params            string     `json:"params"`              //回传参数
+	SettleInfo        goutil.Map `json:"settle_info"`         // 分账信息
+	SubMerchant       goutil.Map `json:"sub_merchant"`        // 子商户信息
+	IsServiceProvider bool       `json:"is_service_provider"` // 是否为服务提供方
 }
 
 type UnifiedResponse struct {

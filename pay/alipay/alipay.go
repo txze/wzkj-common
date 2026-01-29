@@ -135,6 +135,13 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", result.String())
 	bm.Set("passback_params", request.Params)
+	// 是否为服务提供方
+	if request.IsServiceProvider {
+		bm.Set("settle_info", request.SettleInfo)
+		bm.Set("sub_merchant", request.SubMerchant)
+		bm.Set("product_code", "QUICK_MSECURITY_PAY")
+	}
+
 	//手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(context.Background(), bm)
 	if err != nil {
