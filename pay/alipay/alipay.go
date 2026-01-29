@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
+	"github.com/hzxiao/goutil"
 	"github.com/jinzhu/now"
 	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
@@ -137,7 +138,14 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm.Set("passback_params", request.Params)
 	// 是否为服务提供方
 	if request.IsServiceProvider {
-		bm.Set("settle_info", request.SettleInfo)
+		bm.Set("settle_info", goutil.Map{
+			"settle_detail_infos": []goutil.Map{
+				{
+					"amount":        result.String(),
+					"trans_in_type": "defaultSettle",
+				},
+			},
+		})
 		bm.Set("sub_merchant", request.SubMerchant)
 		bm.Set("product_code", "QUICK_MSECURITY_PAY")
 	}
