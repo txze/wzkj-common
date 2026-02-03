@@ -2,6 +2,7 @@ module github.com/txze/wzkj-common
 
 go 1.23.0
 
+toolchain go1.24.1
 
 require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.11
@@ -12,7 +13,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dimiro1/banner v1.1.0
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-pay/gopay v1.5.100
+	github.com/go-pay/gopay v1.5.115
 	github.com/go-pay/util v0.0.4
 	github.com/go-resty/resty/v2 v2.16.5
 	github.com/go-sql-driver/mysql v1.9.2
@@ -61,10 +62,9 @@ require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
-	github.com/go-pay/bm v0.0.1 // indirect
 	github.com/go-pay/crypto v0.0.1 // indirect
 	github.com/go-pay/errgroup v0.0.3 // indirect
-	github.com/go-pay/xhttp v0.0.2 // indirect
+	github.com/go-pay/smap v0.0.2 // indirect
 	github.com/go-pay/xlog v0.0.3 // indirect
 	github.com/go-pay/xtime v0.0.2 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
@@ -115,7 +115,7 @@ require (
 	go.etcd.io/etcd/client/pkg/v3 v3.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.38.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect

@@ -33,15 +33,6 @@ func (a *Alipay) handleBizError(ctx context.Context, err error, operation string
 	return err
 }
 
-// 将金额转换为分
-func amountToCents(amountStr string) (int, error) {
-	amount, err := decimal.NewFromString(amountStr)
-	if err != nil {
-		return 0, err
-	}
-	return int(amount.Mul(decimal.NewFromInt(100)).IntPart()), nil
-}
-
 // 将分转换为元
 func centsToAmount(cents int64) string {
 	return decimal.NewFromInt(cents).Div(decimal.NewFromInt(100)).String()
@@ -134,7 +125,7 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*co
 	}, nil
 }
 
-// 普通支付
+// 普通支付/服务商模式 单笔订单支付
 func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
 	// 配置公共参数
 	a.client.SetCharset("utf-8").
@@ -147,6 +138,15 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 	bm.Set("out_trade_no", request.OrderNo)
 	bm.Set("total_amount", centsToAmount(int64(request.Amount)))
 	bm.Set("passback_params", request.Params)
+	if request.IsServiceMode {
+		bm.Set("product_code", request.ProductCode)
+		bm.Set("sub_merchant", goutil.Map{
+			"merchant_id": request.SubMerchantID,
+		})
+		bm.Set("settle_info", goutil.Map{
+			"settle_detail_infos": request.SettleDetailInfos,
+		})
+	}
 
 	// 手机APP支付参数请求
 	payParam, err := a.client.TradeAppPay(ctx, bm)

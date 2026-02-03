@@ -4,9 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/go-pay/gopay"
-	"github.com/hzxiao/goutil"
-
 	"github.com/txze/wzkj-common/pay/common"
 )
 
@@ -41,7 +38,7 @@ type PaymentStrategy interface {
 	GetType() string
 
 	// MergePay 合并支付
-	MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
+	//MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
 }
 
 type Payment struct {
