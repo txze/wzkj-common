@@ -1,6 +1,13 @@
 package wechat
 
-import "github.com/go-pay/gopay"
+import (
+	"context"
+	"net/http"
+
+	"github.com/go-pay/gopay"
+
+	"github.com/txze/wzkj-common/pay/common"
+)
 
 // 微信分账
 type TradeRoyaltyRateQueryRequest struct {
@@ -37,4 +44,14 @@ func (r TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
 		"receivers":      receivers,
 		"finish":         r.Finish,
 	}
+}
+
+// 分账
+func (w *Wechat) TradeOrderSettle(ctx context.Context, request common.TradeRoyaltyRateQueryRequestInterface) (*common.TradeRoyaltyRateQueryResponse, error) {
+	return nil, nil
+}
+
+// VerifySettleNotification 验证分账通知
+func (w *Wechat) VerifySettleNotification(ctx context.Context, req *http.Request) (*common.SettleNotificationResponse, error) {
+	return nil, nil
 }

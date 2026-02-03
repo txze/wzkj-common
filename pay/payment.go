@@ -37,6 +37,11 @@ type PaymentStrategy interface {
 	// GetType 获取支付类型
 	GetType() string
 
+	// VerifySettleNotification 验证分账通知
+	VerifySettleNotification(ctx context.Context, req *http.Request) (*common.SettleNotificationResponse, error)
+
+	// TradeOrderSettle 交易分账
+	TradeOrderSettle(ctx context.Context, request common.TradeRoyaltyRateQueryRequestInterface) (*common.TradeRoyaltyRateQueryResponse, error)
 	// MergePay 合并支付
 	//MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
 }

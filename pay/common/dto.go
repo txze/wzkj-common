@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/go-pay/gopay"
+
+	"github.com/txze/wzkj-common/pay/define"
 )
 
 // TradeRoyaltyRateQueryRequestInterface 分账查询请求接口
@@ -122,4 +124,68 @@ type SettleNotificationResponse struct {
 	OperationFinishDt   string          `json:"operation_finish_dt"`   // 业务执行完成时间
 	RoyaltyDetailList   []RoyaltyDetail `json:"royalty_detail_list"`   // 分账明细
 	RawData             interface{}     `json:"raw_data"`              // 原始响应数据，用于调试和扩展
+}
+
+// 微信/支付宝状态转换
+func ConvertPaymentStatus(platform, originalStatus string) string {
+	switch platform {
+	case define.PlatformAlipay:
+		return convertAlipayStatus(originalStatus)
+	case define.PlatformWechat:
+		return convertWechatStatus(originalStatus)
+	default:
+		return define.StatusFail
+	}
+}
+
+// 支付宝状态转换
+func convertAlipayStatus(status string) string {
+	switch status {
+	case "TRADE_SUCCESS":
+		return define.StatusSuccess
+	case "TRADE_FINISHED":
+		return define.StatusSuccess
+	case "WAIT_BUYER_PAY":
+		return define.StatusPending
+	case "TRADE_CLOSED":
+		return define.StatusClose
+	default:
+		return define.StatusFail
+	}
+}
+
+// 微信状态转换
+func convertWechatStatus(status string) string {
+	switch status {
+	case "SUCCESS":
+		return define.StatusSuccess
+	case "USERPAYING":
+		return define.StatusPending
+	case "NOTPAY":
+		return define.StatusPending
+	case "REFUND":
+		return define.StatusRefund
+	case "CLOSED":
+		return define.StatusClose
+	case "REVOKED":
+		return define.StatusCancel
+	case "PAYERROR":
+		return define.StatusFail
+	default:
+		return define.StatusFail
+	}
+}
+
+// 分账状态转换
+func ConvertRoyaltyStatus(status string) string {
+	switch status {
+	case "SUCCESS":
+		return define.StatusSuccess
+	case "PROCESSING":
+		return define.StatusPending
+	case "FAIL":
+		return define.StatusFail
+	default:
+		return define.StatusFail
+	}
 }

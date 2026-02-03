@@ -121,7 +121,7 @@ func (w *Wechat) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 	}, nil
 }
 
-func (w *Wechat) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
+func (w *Wechat) QueryPayment(ctx context.Context, orderID string) (*common.UnifiedResponse, error) {
 	queryOrder, err := w.client.V3TransactionQueryOrder(context.Background(), wechat.OutTradeNo, orderID)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,7 @@ func (w *Wechat) VerifySign(params map[string]interface{}) (bool, error) {
 	return true, nil
 }
 
-func (w *Wechat) Close(orderId string) (bool, error) {
+func (w *Wechat) Close(ctx context.Context, orderId string) (bool, error) {
 	wxRsp, err := w.client.V3TransactionCloseOrder(context.Background(), orderId)
 	if err != nil {
 		return false, err
