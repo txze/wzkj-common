@@ -129,6 +129,9 @@ type SettleNotificationResponse struct {
 // SettleConfirmRequestInterface 结算确认请求接口
 type SettleConfirmRequestInterface interface {
 	GetPlatform() string
+
+	// ToStruct 将任意类型的结构体转换为指定类型的结构体
+	ToStruct(to interface{}) error
 }
 
 // SettleConfirmResponse 结算确认响应

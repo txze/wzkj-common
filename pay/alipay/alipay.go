@@ -340,13 +340,15 @@ func (a *Alipay) GetType() string {
 // ConfirmSettle 结算确认
 func (a *Alipay) ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error) {
 	// 将通用接口转换为支付宝特定的请求结构
-	alipayRequest, ok := request.(*SettleConfirmRequest)
-	if !ok {
+
+	var alipayRequest settleConfirmRequest
+	err := request.ToStruct(&alipayRequest)
+	if err != nil {
 		return nil, errors.New("invalid request type for alipay settle confirm")
 	}
 
 	// 调用支付宝的Confirm方法
-	response, err := a.confirm(ctx, alipayRequest)
+	response, err := a.confirm(ctx, &alipayRequest)
 	if err != nil {
 		return nil, err
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/hzxiao/goutil"
 	"github.com/shopspring/decimal"
 
+	"github.com/jinzhu/copier"
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pay/define"
@@ -45,8 +46,8 @@ type SettleConfirmExtendParams struct {
 	RoyaltyFreeze string `json:"royalty_freeze"` // 是否进行资金冻结，用于后续分账
 }
 
-// SettleConfirmRequest 结算确认请求
-type SettleConfirmRequest struct {
+// settleConfirmRequest 结算确认请求
+type settleConfirmRequest struct {
 	OutRequestNo string                     `json:"out_request_no"`           // 确认结算请求流水号
 	TradeNo      string                     `json:"trade_no"`                 // 支付宝交易号
 	SettleInfo   SettleInfo                 `json:"settle_info"`              // 结算信息
@@ -55,8 +56,17 @@ type SettleConfirmRequest struct {
 }
 
 // GetPlatform 实现SettleConfirmRequestInterface接口
-func (r *SettleConfirmRequest) GetPlatform() string {
+func (r *settleConfirmRequest) GetPlatform() string {
 	return define.PlatformAlipay
+}
+
+// ToStruct 将任意类型的结构体转换为指定类型的结构体
+func (r *settleConfirmRequest) ToStruct(to interface{}) error {
+	err := copier.Copy(to, r)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // SettleConfirmResponse 结算确认响应
@@ -68,7 +78,7 @@ type SettleConfirmResponse struct {
 }
 
 // Confirm 资金结算确认请求
-func (a *Alipay) confirm(ctx context.Context, request *SettleConfirmRequest) (*SettleConfirmResponse, error) {
+func (a *Alipay) confirm(ctx context.Context, request *settleConfirmRequest) (*SettleConfirmResponse, error) {
 	// 配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2)
@@ -148,6 +158,16 @@ type TradeRoyaltyRateQueryRequest struct {
 func (a *Alipay) MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface {
 	// 构建请求参数
 	receiver := &TradeRoyaltyRateQueryRequest{}
+	err := util.S2S(data, receiver)
+	if err != nil {
+		return nil
+	}
+	return receiver
+}
+
+func (a *Alipay) MapToSettleConfirmRequest(data goutil.Map) common.SettleConfirmRequestInterface {
+	// 构建请求参数
+	receiver := &settleConfirmRequest{}
 	err := util.S2S(data, receiver)
 	if err != nil {
 		return nil

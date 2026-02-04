@@ -48,11 +48,17 @@ type PaymentStrategy interface {
 	// ConfirmSettle 结算确认（目前仅支付宝支持）
 	ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error)
 
-	// MapToTradeRoyaltyRateQueryRequest 映射分账查询请求参数
-	MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface
-
 	// MergePay 合并支付
 	//MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
+}
+
+// 数据转换接口
+type DataMapper interface {
+	// MapToSettleConfirmRequest 映射分账确认请求参数
+	MapToSettleConfirmRequest(data goutil.Map) common.SettleConfirmRequestInterface
+
+	// MapToTradeRoyaltyRateQueryRequest 映射分账查询请求参数
+	MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface
 }
 
 type Payment struct {

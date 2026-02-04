@@ -67,3 +67,7 @@ func (w *Wechat) MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.Trade
 	}
 	return receiver
 }
+
+func (a *Wechat) MapToSettleConfirmRequest(data goutil.Map) common.SettleConfirmRequestInterface {
+	return nil
+}
