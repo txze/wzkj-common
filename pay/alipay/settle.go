@@ -89,30 +89,32 @@ func (a *Alipay) confirm(ctx context.Context, request *settleConfirmRequest) (*S
 	bm.Set("trade_no", request.TradeNo)
 
 	// 构建结算信息
-	settleDetailInfos := make([]gopay.BodyMap, len(request.SettleInfo.SettleDetailInfos))
-	for i, detail := range request.SettleInfo.SettleDetailInfos {
-		settleDetailInfo := make(gopay.BodyMap)
-		settleDetailInfo.Set("amount", detail.Amount)
-		settleDetailInfo.Set("trans_in", detail.TransIn)
-		settleDetailInfo.Set("trans_in_type", detail.TransInType)
-		if detail.SettleEntityID != "" {
-			settleDetailInfo.Set("settle_entity_id", detail.SettleEntityID)
+	if request.SettleInfo != nil {
+		settleDetailInfos := make([]gopay.BodyMap, len(request.SettleInfo.SettleDetailInfos))
+		for i, detail := range request.SettleInfo.SettleDetailInfos {
+			settleDetailInfo := make(gopay.BodyMap)
+			settleDetailInfo.Set("amount", detail.Amount)
+			settleDetailInfo.Set("trans_in", detail.TransIn)
+			settleDetailInfo.Set("trans_in_type", detail.TransInType)
+			if detail.SettleEntityID != "" {
+				settleDetailInfo.Set("settle_entity_id", detail.SettleEntityID)
+			}
+			if detail.SettleEntityType != "" {
+				settleDetailInfo.Set("settle_entity_type", detail.SettleEntityType)
+			}
+			if detail.SummaryDimension != "" {
+				settleDetailInfo.Set("summary_dimension", detail.SummaryDimension)
+			}
+			if detail.ActualAmount != "" {
+				settleDetailInfo.Set("actual_amount", detail.ActualAmount)
+			}
+			settleDetailInfos[i] = settleDetailInfo
 		}
-		if detail.SettleEntityType != "" {
-			settleDetailInfo.Set("settle_entity_type", detail.SettleEntityType)
-		}
-		if detail.SummaryDimension != "" {
-			settleDetailInfo.Set("summary_dimension", detail.SummaryDimension)
-		}
-		if detail.ActualAmount != "" {
-			settleDetailInfo.Set("actual_amount", detail.ActualAmount)
-		}
-		settleDetailInfos[i] = settleDetailInfo
-	}
 
-	settleInfo := make(gopay.BodyMap)
-	settleInfo.Set("settle_detail_infos", settleDetailInfos)
-	bm.Set("settle_info", settleInfo)
+		settleInfo := make(gopay.BodyMap)
+		settleInfo.Set("settle_detail_infos", settleDetailInfos)
+		bm.Set("settle_info", settleInfo)
+	}
 
 	// 添加扩展参数
 	if request.ExtendParams != nil {
