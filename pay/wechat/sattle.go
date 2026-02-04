@@ -5,8 +5,10 @@ import (
 	"net/http"
 
 	"github.com/go-pay/gopay"
+	"github.com/hzxiao/goutil"
 
 	"github.com/txze/wzkj-common/pay/common"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
 // 微信分账
@@ -54,4 +56,14 @@ func (w *Wechat) TradeOrderSettle(ctx context.Context, request common.TradeRoyal
 // VerifySettleNotification 验证分账通知
 func (w *Wechat) VerifySettleNotification(ctx context.Context, req *http.Request) (*common.SettleNotificationResponse, error) {
 	return nil, nil
+}
+
+func (w *Wechat) MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface {
+	// 构建请求参数
+	receiver := &TradeRoyaltyRateQueryRequest{}
+	err := util.S2S(data, receiver)
+	if err != nil {
+		return nil
+	}
+	return receiver
 }

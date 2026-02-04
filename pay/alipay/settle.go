@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/alipay"
+	"github.com/hzxiao/goutil"
 	"github.com/shopspring/decimal"
 
 	"github.com/txze/wzkj-common/logger"
@@ -142,6 +143,16 @@ type TradeRoyaltyRateQueryRequest struct {
 		Desc        string `json:"desc"`
 	} `json:"royalty_parameters"`
 	RoyaltyMode string `json:"royalty_mode"` // 分账模式
+}
+
+func (a *Alipay) MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface {
+	// 构建请求参数
+	receiver := &TradeRoyaltyRateQueryRequest{}
+	err := util.S2S(data, receiver)
+	if err != nil {
+		return nil
+	}
+	return receiver
 }
 
 func (receiver TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
