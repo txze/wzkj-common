@@ -184,7 +184,7 @@ func (receiver TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
 	bm := make(gopay.BodyMap)
 	bm.Set("out_request_no", receiver.OutRequestNo)
 	bm.Set("trade_no", receiver.TradeNo)
-	royaltyParameters := make(gopay.BodyMap)
+	royaltyParameters := make([]gopay.BodyMap, 0)
 	for _, parameter := range receiver.RoyaltyParameters {
 		royaltyParameter := make(gopay.BodyMap)
 		royaltyParameter.Set("royalty_type", parameter.RoyaltyType)
@@ -196,14 +196,20 @@ func (receiver TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
 			royaltyParameter.Set("amount", centsToAmount(int64(parameter.Amount)))
 		}
 		royaltyParameter.Set("desc", parameter.Desc)
-		royaltyParameters.Set(parameter.RoyaltyType, royaltyParameter)
+		royaltyParameters = append(royaltyParameters, royaltyParameter)
 	}
 	bm.Set("royalty_parameters", royaltyParameters)
 	if receiver.RoyaltyMode == "" {
 		receiver.RoyaltyMode = define.RoyaltyModeAsync
 	}
 	bm.Set("royalty_mode", receiver.RoyaltyMode)
-	bm.Set("extend_params", receiver.ExtendParams)
+
+	if receiver.ExtendParams != nil {
+		bm.Set("extend_params", gopay.BodyMap{
+			"royalty_finish": receiver.ExtendParams.RoyaltyFinish,
+		})
+	}
+
 	return bm
 }
 
