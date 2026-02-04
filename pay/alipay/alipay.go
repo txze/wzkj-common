@@ -150,6 +150,8 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		bm.Set("settle_info", goutil.Map{
 			"settle_detail_infos": request.SettleDetailInfos,
 		})
+
+		bm.Set("settle_period_time", "30d")
 	}
 
 	// 手机APP支付参数请求
