@@ -44,7 +44,8 @@ type SettleInfo struct {
 
 // SettleConfirmExtendParams 扩展字段信息
 type SettleConfirmExtendParams struct {
-	RoyaltyFreeze bool `json:"royalty_freeze"` // 是否进行资金冻结，用于后续分账
+	RoyaltyFreeze bool `json:"royalty_freeze,omitempty"` // 是否进行资金冻结，用于后续分账
+	RoyaltyFinish bool `json:"royalty_finish,omitempty"` // 是否完结分账，默认false
 }
 
 // settleConfirmRequest 结算确认请求
@@ -155,7 +156,8 @@ type TradeRoyaltyRateQueryRequest struct {
 		AmountPercentage int    `json:"amount_percentage"`
 		Desc             string `json:"desc"`
 	} `json:"royalty_parameters"`
-	RoyaltyMode string `json:"royalty_mode"` // 分账模式
+	RoyaltyMode  string                     `json:"royalty_mode"`  // 分账模式
+	ExtendParams *SettleConfirmExtendParams `json:"extend_params"` // 扩展字段信息
 }
 
 func (a *Alipay) MapToTradeRoyaltyRateQueryRequest(data goutil.Map) common.TradeRoyaltyRateQueryRequestInterface {
@@ -201,6 +203,7 @@ func (receiver TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
 		receiver.RoyaltyMode = define.RoyaltyModeAsync
 	}
 	bm.Set("royalty_mode", receiver.RoyaltyMode)
+	bm.Set("extend_params", receiver.ExtendParams)
 	return bm
 }
 
