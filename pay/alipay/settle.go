@@ -28,7 +28,7 @@ func amountToCents(amountStr string) (int, error) {
 
 // SettleDetailInfo 结算详细信息
 type SettleDetailInfo struct {
-	Amount           string `json:"amount"`             // 结算的金额，单位为元
+	Amount           int    `json:"amount"`             // 结算的金额，单位为元
 	TransIn          string `json:"trans_in"`           // 结算收款方
 	TransInType      string `json:"trans_in_type"`      // 结算收款方的账户类型
 	SettleEntityID   string `json:"settle_entity_id"`   // 结算主体标识
@@ -93,7 +93,7 @@ func (a *Alipay) confirm(ctx context.Context, request *settleConfirmRequest) (*S
 		settleDetailInfos := make([]gopay.BodyMap, len(request.SettleInfo.SettleDetailInfos))
 		for i, detail := range request.SettleInfo.SettleDetailInfos {
 			settleDetailInfo := make(gopay.BodyMap)
-			settleDetailInfo.Set("amount", detail.Amount)
+			settleDetailInfo.Set("amount", centsToAmount(int64(detail.Amount)))
 			settleDetailInfo.Set("trans_in", detail.TransIn)
 			settleDetailInfo.Set("trans_in_type", detail.TransInType)
 			if detail.SettleEntityID != "" {
