@@ -10,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 
 	"github.com/jinzhu/copier"
+
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pay/define"
@@ -43,16 +44,15 @@ type SettleInfo struct {
 
 // SettleConfirmExtendParams 扩展字段信息
 type SettleConfirmExtendParams struct {
-	RoyaltyFreeze string `json:"royalty_freeze"` // 是否进行资金冻结，用于后续分账
+	RoyaltyFreeze bool `json:"royalty_freeze"` // 是否进行资金冻结，用于后续分账
 }
 
 // settleConfirmRequest 结算确认请求
 type settleConfirmRequest struct {
-	OutRequestNo string                     `json:"out_request_no"`           // 确认结算请求流水号
-	TradeNo      string                     `json:"trade_no"`                 // 支付宝交易号
-	SettleInfo   SettleInfo                 `json:"settle_info"`              // 结算信息
-	ExtendParams *SettleConfirmExtendParams `json:"extend_params,omitempty"`  // 扩展字段信息
-	AppAuthToken string                     `json:"app_auth_token,omitempty"` // 应用授权令牌
+	OutRequestNo string                     `json:"out_request_no"` // 确认结算请求流水号
+	TradeNo      string                     `json:"trade_no"`       // 支付宝交易号
+	SettleInfo   *SettleInfo                `json:"settle_info"`    // 结算信息
+	ExtendParams *SettleConfirmExtendParams `json:"extend_params"`  // 扩展字段信息
 }
 
 // GetPlatform 实现SettleConfirmRequestInterface接口
