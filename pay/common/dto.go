@@ -126,6 +126,21 @@ type SettleNotificationResponse struct {
 	RawData             interface{}     `json:"raw_data"`              // 原始响应数据，用于调试和扩展
 }
 
+// SettleConfirmRequestInterface 结算确认请求接口
+type SettleConfirmRequestInterface interface {
+	GetPlatform() string
+}
+
+// SettleConfirmResponse 结算确认响应
+type SettleConfirmResponse struct {
+	Platform string      `json:"platform"`           // 平台类型：alipay 或 wechat
+	Code     string      `json:"code"`               // 响应码
+	Msg      string      `json:"msg"`                // 响应信息
+	SubCode  string      `json:"sub_code"`           // 子响应码
+	SubMsg   string      `json:"sub_msg"`            // 子响应信息
+	RawData  interface{} `json:"raw_data,omitempty"` // 原始响应数据，用于调试和扩展
+}
+
 // 微信/支付宝状态转换
 func ConvertPaymentStatus(platform, originalStatus string) string {
 	switch platform {

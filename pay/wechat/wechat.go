@@ -211,6 +211,11 @@ func (w *Wechat) GetType() string {
 	return w.config.GetType()
 }
 
+// ConfirmSettle 结算确认（微信实现，目前不支持）
+func (w *Wechat) ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error) {
+	return nil, nil
+}
+
 func NewWechat(cfg WechatConfig) (*Wechat, error) {
 	mchid := cfg.Mchid
 	serialNo := cfg.SerialNo

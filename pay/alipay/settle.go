@@ -53,6 +53,11 @@ type SettleConfirmRequest struct {
 	AppAuthToken string                     `json:"app_auth_token,omitempty"` // 应用授权令牌
 }
 
+// GetPlatform 实现SettleConfirmRequestInterface接口
+func (r *SettleConfirmRequest) GetPlatform() string {
+	return define.PlatformAlipay
+}
+
 // SettleConfirmResponse 结算确认响应
 type SettleConfirmResponse struct {
 	Code    string `json:"code"`     // 响应码
@@ -62,7 +67,7 @@ type SettleConfirmResponse struct {
 }
 
 // Confirm 资金结算确认请求
-func (a *Alipay) Confirm(ctx context.Context, request *SettleConfirmRequest) (*SettleConfirmResponse, error) {
+func (a *Alipay) confirm(ctx context.Context, request *SettleConfirmRequest) (*SettleConfirmResponse, error) {
 	// 配置公共参数
 	a.client.SetCharset("utf-8").
 		SetSignType(alipay.RSA2)

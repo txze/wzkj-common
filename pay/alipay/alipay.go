@@ -15,6 +15,7 @@ import (
 
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
+	"github.com/txze/wzkj-common/pay/define"
 	"github.com/txze/wzkj-common/pkg/ierr"
 	"github.com/txze/wzkj-common/pkg/util"
 )
@@ -329,6 +330,31 @@ func (a *Alipay) MergePay(ctx context.Context, bm gopay.BodyMap) (goutil.Map, er
 
 func (a *Alipay) GetType() string {
 	return a.config.GetType()
+}
+
+// ConfirmSettle 结算确认
+func (a *Alipay) ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error) {
+	// 将通用接口转换为支付宝特定的请求结构
+	alipayRequest, ok := request.(*SettleConfirmRequest)
+	if !ok {
+		return nil, errors.New("invalid request type for alipay settle confirm")
+	}
+
+	// 调用支付宝的Confirm方法
+	response, err := a.confirm(ctx, alipayRequest)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为通用响应结构
+	return &common.SettleConfirmResponse{
+		Platform: define.PlatformAlipay,
+		Code:     response.Code,
+		Msg:      response.Msg,
+		SubCode:  response.SubCode,
+		SubMsg:   response.SubMsg,
+		RawData:  response,
+	}, nil
 }
 
 func NewAlipay(cfg AlipayConfig) (*Alipay, error) {

@@ -42,6 +42,10 @@ type PaymentStrategy interface {
 
 	// TradeOrderSettle 交易分账
 	TradeOrderSettle(ctx context.Context, request common.TradeRoyaltyRateQueryRequestInterface) (*common.TradeRoyaltyRateQueryResponse, error)
+
+	// ConfirmSettle 结算确认（目前仅支付宝支持）
+	ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error)
+
 	// MergePay 合并支付
 	//MergePay(ctx context.Context, data gopay.BodyMap) (goutil.Map, error)
 }
