@@ -144,13 +144,8 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 		bm.Set("sub_merchant", goutil.Map{
 			"merchant_id": request.SubMerchantID,
 		})
-		var settleDetailInfos = make([]map[string]string, len(request.SettleDetailInfos))
-		for i, info := range request.SettleDetailInfos {
-			settleDetailInfos[i] = map[string]string{
-				"amount":             centsToAmount(int64(request.Amount)),
-				"trans_in_type":      info["trans_in_type"],
-				"settle_period_time": info["settle_period_time"],
-			}
+		for i, _ := range request.SettleDetailInfos {
+			request.SettleDetailInfos[i]["amount"] = centsToAmount(int64(request.Amount))
 		}
 		bm.Set("settle_info", goutil.Map{
 			"settle_detail_infos": request.SettleDetailInfos,
