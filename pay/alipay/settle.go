@@ -148,11 +148,12 @@ type TradeRoyaltyRateQueryRequest struct {
 	OutRequestNo      string `json:"out_request_no"`
 	TradeNo           string `json:"trade_no"`
 	RoyaltyParameters []struct {
-		RoyaltyType string `json:"royalty_type"`
-		TransInType string `json:"trans_in_type"`
-		TransIn     string `json:"trans_in"`
-		Amount      string `json:"amount"`
-		Desc        string `json:"desc"`
+		RoyaltyType      string `json:"royalty_type"`
+		TransInType      string `json:"trans_in_type"`
+		TransIn          string `json:"trans_in"`
+		Amount           int    `json:"amount"`
+		AmountPercentage int    `json:"amount_percentage"`
+		Desc             string `json:"desc"`
 	} `json:"royalty_parameters"`
 	RoyaltyMode string `json:"royalty_mode"` // 分账模式
 }
@@ -181,7 +182,21 @@ func (receiver TradeRoyaltyRateQueryRequest) ToMap() gopay.BodyMap {
 	bm := make(gopay.BodyMap)
 	bm.Set("out_request_no", receiver.OutRequestNo)
 	bm.Set("trade_no", receiver.TradeNo)
-	bm.Set("royalty_parameters", receiver.RoyaltyParameters)
+	royaltyParameters := make(gopay.BodyMap)
+	for _, parameter := range receiver.RoyaltyParameters {
+		royaltyParameter := make(gopay.BodyMap)
+		royaltyParameter.Set("royalty_type", parameter.RoyaltyType)
+		royaltyParameter.Set("trans_in_type", parameter.TransInType)
+		royaltyParameter.Set("trans_in", parameter.TransIn)
+		if parameter.AmountPercentage > 0 {
+			royaltyParameter.Set("amount_percentage", parameter.AmountPercentage)
+		} else {
+			royaltyParameter.Set("amount", centsToAmount(int64(parameter.Amount)))
+		}
+		royaltyParameter.Set("desc", parameter.Desc)
+		royaltyParameters.Set(parameter.RoyaltyType, royaltyParameter)
+	}
+	bm.Set("royalty_parameters", royaltyParameters)
 	if receiver.RoyaltyMode == "" {
 		receiver.RoyaltyMode = define.RoyaltyModeAsync
 	}
