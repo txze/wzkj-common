@@ -178,6 +178,8 @@ func (a *Alipay) VerifyNotification(req *http.Request) (*common.UnifiedResponse,
 		return nil, err
 	}
 
+	logger.FromContext(req.Context()).Info("alipay verify data", logger.Any("data", bm))
+
 	totalAmountInt, err := amountToCents(bm.GetString("total_amount"))
 	if err != nil {
 		return nil, err
