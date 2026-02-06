@@ -34,7 +34,7 @@ type SettleDetailInfo struct {
 	SettleEntityID   string `json:"settle_entity_id"`   // 结算主体标识
 	SettleEntityType string `json:"settle_entity_type"` // 结算主体类型
 	SummaryDimension string `json:"summary_dimension"`  // 结算汇总维度
-	ActualAmount     string `json:"actual_amount"`      // 实际结算金额
+	ActualAmount     int    `json:"actual_amount"`      // 实际结算金额
 }
 
 // SettleInfo 结算信息
@@ -94,7 +94,9 @@ func (a *Alipay) confirm(ctx context.Context, request *settleConfirmRequest) (*S
 		settleDetailInfos := make([]gopay.BodyMap, len(request.SettleInfo.SettleDetailInfos))
 		for i, detail := range request.SettleInfo.SettleDetailInfos {
 			settleDetailInfo := make(gopay.BodyMap)
-			settleDetailInfo.Set("amount", centsToAmount(int64(detail.Amount)))
+			if detail.Amount > 0 {
+				settleDetailInfo.Set("amount", centsToAmount(int64(detail.Amount)))
+			}
 			settleDetailInfo.Set("trans_in", detail.TransIn)
 			settleDetailInfo.Set("trans_in_type", detail.TransInType)
 			if detail.SettleEntityID != "" {
@@ -106,8 +108,8 @@ func (a *Alipay) confirm(ctx context.Context, request *settleConfirmRequest) (*S
 			if detail.SummaryDimension != "" {
 				settleDetailInfo.Set("summary_dimension", detail.SummaryDimension)
 			}
-			if detail.ActualAmount != "" {
-				settleDetailInfo.Set("actual_amount", detail.ActualAmount)
+			if detail.ActualAmount > 0 {
+				settleDetailInfo.Set("actual_amount", centsToAmount(int64(detail.ActualAmount)))
 			}
 			settleDetailInfos[i] = settleDetailInfo
 		}
