@@ -88,6 +88,24 @@ func (a *Alipay) Refund(ctx context.Context, request *common.RefundRequest) (*co
 		Set("refund_reason", request.GoodsName).
 		Set("out_request_no", request.RefundNo)
 
+	values := make([]gopay.BodyMap, len(request.RefundRoyaltyParameters))
+	for i, param := range request.RefundRoyaltyParameters {
+		values[i] = gopay.BodyMap{
+			"amount":         centsToAmount(param.Amount),
+			"trans_in":       param.TransIn,
+			"royalty_type":   param.RoyaltyType,
+			"trans_out":      param.TransOut,
+			"trans_out_type": param.TransOutType,
+			"royalty_scene":  param.RoyaltyScene,
+			"trans_in_type":  param.TransInType,
+			"trans_in_name":  param.TransInName,
+			"desc":           param.Desc,
+		}
+	}
+	if len(values) > 0 {
+		bm.Set("royalty_parameters", values)
+	}
+
 	// 发起退款请求
 	aliRsp, err := a.client.TradeRefund(ctx, bm)
 	if err != nil {

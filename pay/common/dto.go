@@ -59,12 +59,25 @@ type UnifiedResponse struct {
 }
 
 type RefundRequest struct {
-	RefundNo  string `json:"refund_no"`  // 退款流水号
-	OrderNo   string `json:"order_no"`   // 商户订单号
-	Amount    int    `json:"amount"`     // 支付金额
-	Total     int    `json:"total"`      // 愿支付金额
-	Currency  string `json:"currency"`   // 支付货币
-	GoodsName string `json:"goods_name"` // 商品名
+	RefundNo                string                   `json:"refund_no"`                 // 退款流水号
+	OrderNo                 string                   `json:"order_no"`                  // 商户订单号
+	Amount                  int                      `json:"amount"`                    // 支付金额
+	Total                   int                      `json:"total"`                     // 愿支付金额
+	Currency                string                   `json:"currency"`                  // 支付货币
+	GoodsName               string                   `json:"goods_name"`                // 商品名
+	RefundRoyaltyParameters []RefundRoyaltyParameter `json:"refund_royalty_parameters"` //分账参数
+}
+
+type RefundRoyaltyParameter struct {
+	Amount       int64  `json:"amount"`
+	TransIn      string `json:"trans_in"`
+	RoyaltyType  string `json:"royalty_type"`
+	TransOut     string `json:"trans_out"`
+	TransOutType string `json:"trans_out_type"`
+	RoyaltyScene string `json:"royalty_scene"`
+	TransInType  string `json:"trans_in_type"`
+	TransInName  string `json:"trans_in_name"`
+	Desc         string `json:"desc"`
 }
 
 type RefundResponse struct {
