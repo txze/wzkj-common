@@ -14,6 +14,7 @@ import (
 	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
 	"github.com/txze/wzkj-common/pay/define"
+	"github.com/txze/wzkj-common/pkg/ierr"
 	"github.com/txze/wzkj-common/pkg/util"
 )
 
@@ -261,14 +262,17 @@ func (a *Alipay) VerifySettleNotification(ctx context.Context, req *http.Request
 		return nil, err
 	}
 
-	// 解析分账通知参数
-	outRequestNo := bm.GetString("out_request_no")
-	msgType := bm.GetString("msg_type")
-	tradeNo := bm.GetString("trade_no")
-	royaltyFinishAmountStr := bm.GetString("royalty_finish_amount")
-	settleNo := bm.GetString("settle_no")
-	operationDt := bm.GetString("operation_dt")
-	operationFinishDt := bm.GetString("operation_finish_dt")
+	bizContent := bm.GetString("biz_content")
+	var settleNotification SettleNotification
+	err = util.Json2S(bizContent, &settleNotification)
+	if err != nil {
+		logger.FromContext(ctx).Error("parse biz_content error", logger.Any("err", err))
+		return nil, ierr.NewIError(ierr.ParamErr, "parse biz_content error"+err.Error())
+	}
+
+	outRequestNo := settleNotification.OutRequestNo
+	tradeNo := settleNotification.TradeNo
+	royaltyFinishAmountStr := settleNotification.RoyaltyFinishAmount
 
 	// 转换分账完结金额为分
 	var royaltyFinishAmount int
@@ -282,66 +286,35 @@ func (a *Alipay) VerifySettleNotification(ctx context.Context, req *http.Request
 
 	// 解析分账明细
 	var royaltyDetailList []common.RoyaltyDetail
-	royaltyDetailListStr := bm.GetString("royalty_detail_list")
-	if royaltyDetailListStr != "" {
-		var royaltyDetails []struct {
-			OperationType  string `json:"operation_type"`
-			Amount         string `json:"amount"`
-			State          string `json:"state"`
-			ExecuteDt      string `json:"execute_dt"`
-			TransOut       string `json:"trans_out"`
-			TransOutType   string `json:"trans_out_type"`
-			TransOutOpenId string `json:"trans_out_open_id"`
-			TransIn        string `json:"trans_in"`
-			TransInType    string `json:"trans_in_type"`
-			TransInOpenId  string `json:"trans_in_open_id"`
-			DetailId       string `json:"detail_id"`
-			ErrorCode      string `json:"error_code"`
-			ErrorDesc      string `json:"error_desc"`
-		}
-
-		err = util.Json2S(royaltyDetailListStr, &royaltyDetails)
+	for _, detail := range settleNotification.RoyaltyDetailList {
+		amount, err := amountToCents(detail.Amount)
 		if err != nil {
 			logger.FromContext(ctx).Error("alipay verify settle notification error", logger.Any("error", err))
 			return nil, err
 		}
-
-		for _, detail := range royaltyDetails {
-			amount, err := amountToCents(detail.Amount)
-			if err != nil {
-				logger.FromContext(ctx).Error("alipay verify settle notification error", logger.Any("error", err))
-				return nil, err
-			}
-
-			royaltyDetail := common.RoyaltyDetail{
-				OperationType:  detail.OperationType,
-				Amount:         amount,
-				State:          detail.State,
-				ExecuteDt:      detail.ExecuteDt,
-				TransOut:       detail.TransOut,
-				TransOutType:   detail.TransOutType,
-				TransOutOpenId: detail.TransOutOpenId,
-				TransIn:        detail.TransIn,
-				TransInType:    detail.TransInType,
-				TransInOpenId:  detail.TransInOpenId,
-				DetailId:       detail.DetailId,
-				ErrorCode:      detail.ErrorCode,
-				ErrorDesc:      detail.ErrorDesc,
-			}
-			royaltyDetailList = append(royaltyDetailList, royaltyDetail)
+		royaltyDetail := common.RoyaltyDetail{
+			OperationType: detail.OperationType,
+			Amount:        amount,
+			State:         detail.State,
+			ExecuteDt:     detail.ExecuteDt,
+			TransIn:       detail.TransIn,
+			TransInType:   detail.TransInType,
+			DetailId:      detail.DetailId,
 		}
+		royaltyDetailList = append(royaltyDetailList, royaltyDetail)
+
 	}
 
 	// 构建分账通知响应
 	response := &common.SettleNotificationResponse{
 		Platform:            a.GetType(),
 		OutRequestNo:        outRequestNo,
-		MsgType:             msgType,
+		MsgType:             settleNotification.MsgType,
 		TradeNo:             tradeNo,
 		RoyaltyFinishAmount: royaltyFinishAmount,
-		SettleNo:            settleNo,
-		OperationDt:         operationDt,
-		OperationFinishDt:   operationFinishDt,
+		SettleNo:            settleNotification.SettleNo,
+		OperationDt:         settleNotification.OperationDt,
+		OperationFinishDt:   settleNotification.OperationFinishDt,
 		RoyaltyDetailList:   royaltyDetailList,
 		RawData:             bm,
 	}
