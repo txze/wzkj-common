@@ -169,18 +169,28 @@ func (a *Alipay) Pay(ctx context.Context, request *common.PaymentRequest) (map[s
 			"settle_detail_infos": request.SettleDetailInfos,
 		})
 
-		bm.Set("settle_period_time", "30d")
-	}
-
-	// 手机APP支付参数请求
-	payParam, err := a.client.TradeAppPay(ctx, bm)
-	if err != nil {
-		logger.FromContext(ctx).Error("alipay error", logger.Any("error", err))
-		return nil, err
+		bm.Set("settle_period_time", "15d")
 	}
 
 	rsp := make(map[string]interface{})
-	rsp["orderStr"] = payParam
+	switch request.ProductCode {
+	case "QUICK_WAP_WAY":
+		payUrl, err := a.client.TradeWapPay(ctx, bm)
+		if err != nil {
+			logger.FromContext(ctx).Error("alipay wap error", logger.Any("error", err))
+			return nil, err
+		}
+		rsp["payUrl"] = payUrl
+	default:
+		// 手机APP支付参数请求
+		payParam, err := a.client.TradeAppPay(ctx, bm)
+		if err != nil {
+			logger.FromContext(ctx).Error("alipay app error", logger.Any("error", err))
+			return nil, err
+		}
+		rsp["orderStr"] = payParam
+	}
+
 	return rsp, nil
 }
 
