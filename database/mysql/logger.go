@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm/logger"
 
 	logger2 "github.com/txze/wzkj-common/logger"
@@ -44,7 +45,7 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	opType := extractSQLType(sql)
 
 	// 构建日志字段
-	fields := []logger2.Field{
+	fields := []zap.Field{
 		logger2.String("sql", sql),
 		logger2.Int64("rows", rows),
 		logger2.String("elapsed", elapsed.String()),
