@@ -114,7 +114,7 @@ func consoleHook(path string) zapcore.Core {
 
 func New(path string) *L {
 	newHook(consoleHook(path))
-	return &L{log: zap.New(zapcore.NewTee(hookCore...), zap.AddCaller(), zap.AddCallerSkip(2))}
+	return &L{log: zap.New(zapcore.NewTee(hookCore...), zap.AddCaller(), zap.AddCallerSkip(1))}
 
 }
 
