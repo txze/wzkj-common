@@ -36,7 +36,7 @@ func WithTrace(c *gin.Context) *zap.Logger {
 		traceID = "unknown"
 	}
 
-	return defaultLogger.log.With(
+	return defaultLogger.log.WithOptions(zap.AddCallerSkip(-1)).With(
 		zap.String("traceID", traceID),
 		zap.String("path", c.Request.URL.Path),
 		zap.String("method", c.Request.Method),
@@ -51,7 +51,7 @@ func FromContext(ctx context.Context) *zap.Logger {
 		traceID = "unknown"
 	}
 
-	return defaultLogger.log.With(
+	return defaultLogger.log.WithOptions(zap.AddCallerSkip(-1)).With(
 		zap.String("traceID", traceID.(string)),
 	)
 }
