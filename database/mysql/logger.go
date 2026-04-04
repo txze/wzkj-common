@@ -55,15 +55,15 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (sql 
 	// Gorm 错误时打印
 	if err != nil {
 		fields = append(fields, logger2.Err(err))
-		logger2.FromContext(ctx).Error("SQL ERROR", fields...)
+		logger2.FromContext(ctx).WithOptions(zap.AddCaller()).Error("SQL ERROR", fields...)
 		return
 	}
 
 	// 慢查询日志
 	if l.SlowThreshold != 0 && elapsed > l.SlowThreshold {
-		logger2.FromContext(ctx).Warn("DATABASE SLOW QUERY", fields...)
+		logger2.FromContext(ctx).WithOptions(zap.AddCaller()).Warn("DATABASE SLOW QUERY", fields...)
 	} else {
-		logger2.FromContext(ctx).Info("SQL EXECUTION", fields...)
+		logger2.FromContext(ctx).WithOptions(zap.AddCaller()).Info("SQL EXECUTION", fields...)
 	}
 }
 
