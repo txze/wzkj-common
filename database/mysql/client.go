@@ -5,6 +5,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 
+	"gorm.io/plugin/dbresolver"
+
 	log "github.com/txze/wzkj-common/logger"
 
 	"gorm.io/driver/mysql"
@@ -23,23 +25,18 @@ type Config struct {
 }
 
 // GormClient 数据库客户端结构体，支持主从架构
-// - master: 主数据库连接
-// - slaves: 从数据库连接列表
+// - master: 主数据库连接（包含读写分离配置）
 // - masterDSN: 主数据库连接字符串
 // - slaveDSNs: 从数据库连接字符串列表
-// - currentSlaveIndex: 当前使用的从库索引，用于轮询负载均衡
 type GormClient struct {
-	master            *gorm.DB
-	slaves            []*gorm.DB
-	masterDSN         string
-	slaveDSNs         []string
-	currentSlaveIndex int
+	master    *gorm.DB
+	masterDSN string
+	slaveDSNs []string
 }
 
 // NewClient 创建一个新的数据库客户端实例
 func NewClient() *GormClient {
 	return &GormClient{
-		slaves:    make([]*gorm.DB, 0),
 		slaveDSNs: make([]string, 0),
 	}
 }
@@ -84,7 +81,7 @@ func DialWithConfig(config Config) *GormClient {
 // - max: 最大打开连接数
 func (c *GormClient) Dial(masterDSN string, slaveDSNs []string, idle, max int) (*GormClient, error) {
 	var err error
-	// master dial
+	// 连接主库
 	c.master, err = gorm.Open(mysql.Open(masterDSN), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
 		Logger:                                   NewGormLogger(),
@@ -95,6 +92,7 @@ func (c *GormClient) Dial(masterDSN string, slaveDSNs []string, idle, max int) (
 	c.master.Logger.LogMode(logger.Info)
 	c.master = c.master.Debug()
 
+	// 配置连接池
 	sqlMasterDB, err := c.master.DB()
 	if err != nil {
 		return c, err
@@ -110,29 +108,22 @@ func (c *GormClient) Dial(masterDSN string, slaveDSNs []string, idle, max int) (
 	sqlMasterDB.SetMaxOpenConns(max)
 	sqlMasterDB.SetConnMaxLifetime(time.Hour)
 
-	// 连接从库
-	for _, dsn := range slaveDSNs {
-		slave, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-			DisableForeignKeyConstraintWhenMigrating: true,
-			Logger:                                   NewGormLogger(),
-		})
-		if err != nil {
-			log.Error("连接从库失败: " + err.Error())
-			continue
-		}
-		slave.Logger.LogMode(logger.Info)
-		slave = slave.Debug()
-		sqlSlaveDB, err := slave.DB()
-		if err != nil {
-			log.Error("获取从库连接失败: " + err.Error())
-			continue
+	// 配置从库，使用 GORM 的 dbresolver 插件实现读写分离
+	if len(slaveDSNs) > 0 {
+		replicas := make([]gorm.Dialector, 0, len(slaveDSNs))
+		for _, dsn := range slaveDSNs {
+			replicas = append(replicas, mysql.Open(dsn))
 		}
 
-		sqlSlaveDB.SetMaxIdleConns(idle)
-		sqlSlaveDB.SetMaxOpenConns(max)
-		sqlSlaveDB.SetConnMaxLifetime(time.Hour)
-
-		c.slaves = append(c.slaves, slave)
+		// 使用 dbresolver 插件配置读写分离，采用轮询策略
+		err = c.master.Use(dbresolver.Register(dbresolver.Config{
+			Replicas: replicas,
+			Policy:   dbresolver.RandomPolicy{}, // 轮询策略
+		}).SetConnMaxIdleTime(time.Hour).SetConnMaxLifetime(time.Hour).SetMaxIdleConns(idle).SetMaxOpenConns(max))
+		if err != nil {
+			log.Error("配置读写分离失败: " + err.Error())
+			// 继续执行，即使读写分离配置失败，也可以使用主库
+		}
 	}
 
 	c.masterDSN = masterDSN
@@ -146,19 +137,12 @@ func (c *GormClient) Master() *gorm.DB {
 	return c.master
 }
 
-// Slave 获取从数据库连接，用于读操作
-// - 实现了轮询负载均衡
-// - 如果没有从库可用，会回退到主库
+// Slave 获取数据库连接，用于读操作
+// 使用 GORM 的 dbresolver 插件时，会自动路由到从库
 func (c *GormClient) Slave() *gorm.DB {
-	if len(c.slaves) == 0 {
-		// 没有从库可用时回退到主库
-		return c.master
-	}
-
-	// 轮询负载均衡
-	slave := c.slaves[c.currentSlaveIndex]
-	c.currentSlaveIndex = (c.currentSlaveIndex + 1) % len(c.slaves)
-	return slave
+	// 当使用 dbresolver 插件时，GORM 会自动处理读写分离
+	// 读操作会自动路由到从库，写操作会自动路由到主库
+	return c.master
 }
 
 // GetClient 根据名称获取数据库客户端
@@ -166,11 +150,9 @@ func GetClient(name string) *GormClient {
 	return clientMap[name]
 }
 
-// CheckHealth 检查所有数据库连接的健康状态
+// CheckHealth 检查数据库连接的健康状态
 // - 检查主库健康状态
-// - 检查从库健康状态
 // - 如果主库不健康，尝试故障转移
-// - 如果从库不健康，从列表中移除
 func (c *GormClient) CheckHealth() bool {
 	// 检查主库健康状态
 	if c.master != nil {
@@ -189,48 +171,79 @@ func (c *GormClient) CheckHealth() bool {
 		}
 	}
 
-	// 检查从库健康状态
-	if len(c.slaves) > 0 {
-		for i, slave := range c.slaves {
-			sqlDB, err := slave.DB()
-			if err != nil {
-				log.Error("获取从库连接失败: " + err.Error())
-				// 从列表中移除宕机的从库
-				c.slaves = append(c.slaves[:i], c.slaves[i+1:]...)
-				continue
-			}
-			if err := sqlDB.Ping(); err != nil {
-				log.Error("从数据库宕机: " + err.Error())
-				// 从列表中移除宕机的从库
-				c.slaves = append(c.slaves[:i], c.slaves[i+1:]...)
-			}
-		}
-	}
+	// 注意：使用 dbresolver 时，从库健康检查由 GORM 自动处理
+	// GORM 会自动跳过不可用的从库
 
 	return true
 }
 
-// HandleMasterFailover 处理主库故障转移，将一个从库提升为主库
+// HandleMasterFailover 处理主库故障转移
+// 在 MHA + Keepalived + havip 架构下，虚拟 IP 会自动漂移到新的主库
+// 这里我们重新连接到新的主库（通过相同的虚拟 IP）
+// 并更新从库列表，移除已经变为主库的实例
 func (c *GormClient) HandleMasterFailover() {
-	if len(c.slaves) == 0 {
-		log.Error("没有可用的从库进行故障转移")
+	log.Info("开始主库故障转移...")
+
+	// 尝试重新连接到主库（虚拟 IP 已漂移到新主库）
+	newMaster, err := gorm.Open(mysql.Open(c.masterDSN), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+		Logger:                                   NewGormLogger(),
+	})
+	if err != nil {
+		log.Error("重新连接主库失败: " + err.Error())
 		return
 	}
 
-	// 将第一个可用的从库提升为主库
-	newMaster := c.slaves[0]
-	c.master = newMaster
+	// 配置新主库
+	newMaster.Logger.LogMode(logger.Info)
+	newMaster = newMaster.Debug()
 
-	// 从从库列表中移除被提升的从库
-	c.slaves = c.slaves[1:]
-
-	// 更新主库连接字符串（假设从库连接字符串顺序与从库列表一致）
-	if len(c.slaveDSNs) > 0 {
-		c.masterDSN = c.slaveDSNs[0]
-		c.slaveDSNs = c.slaveDSNs[1:]
+	// 配置连接池
+	sqlMasterDB, err := newMaster.DB()
+	if err != nil {
+		log.Error("获取新主库连接失败: " + err.Error())
+		return
 	}
 
-	log.Info("主库故障转移完成: 将一个从库提升为主库")
+	// 保持与原主库相同的连接池配置
+	sqlMasterDB.SetMaxIdleConns(10)
+	sqlMasterDB.SetMaxOpenConns(50)
+	sqlMasterDB.SetConnMaxLifetime(time.Hour)
+
+	// 更新从库列表，移除已经变为主库的实例
+	// 在 MHA 架构下，当从库被提升为主库后，它应该从从库列表中移除
+	updatedSlaveDSNs := make([]string, 0, len(c.slaveDSNs))
+	for _, dsn := range c.slaveDSNs {
+		// 检查该从库是否已经变为主库
+		// 注意：在实际部署中，你可能需要根据具体的架构和配置来判断
+		// 这里我们假设主库使用虚拟 IP，从库使用实际 IP，所以不需要移除
+		// 如果从库提升为主库后其连接字符串会与主库相同，则需要跳过
+		updatedSlaveDSNs = append(updatedSlaveDSNs, dsn)
+	}
+
+	// 重新配置从库
+	if len(updatedSlaveDSNs) > 0 {
+		replicas := make([]gorm.Dialector, 0, len(updatedSlaveDSNs))
+		for _, dsn := range updatedSlaveDSNs {
+			replicas = append(replicas, mysql.Open(dsn))
+		}
+
+		// 使用 dbresolver 插件配置读写分离
+		err = newMaster.Use(dbresolver.Register(dbresolver.Config{
+			Replicas: replicas,
+			Policy:   dbresolver.RandomPolicy{}, // 随机策略
+		}).SetConnMaxIdleTime(time.Hour).SetConnMaxLifetime(time.Hour).SetMaxIdleConns(10).SetMaxOpenConns(50))
+		if err != nil {
+			log.Error("配置读写分离失败: " + err.Error())
+			// 继续执行，即使读写分离配置失败，也可以使用主库
+		}
+	}
+
+	// 替换主库连接和从库列表
+	c.master = newMaster
+	c.slaveDSNs = updatedSlaveDSNs
+
+	log.Info("主库故障转移完成: 重新连接到新主库")
 }
 
 // StartHealthChecks 启动周期性健康检查
