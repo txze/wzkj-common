@@ -1,91 +1,83 @@
 package allinpay
 
-// 关闭订单接口响应
-type CloseResponse struct {
-	// 通信标识
-	RetCode string `json:"retcode" xml:"retcode"` // 返回码 SUCCESS/FAIL
-	RetMsg  string `json:"retmsg" xml:"retmsg"`   // 返回码说明
+import (
+	"github.com/hzxiao/goutil"
+)
 
-	CusID     string `json:"cusid" `     // 商户号 - 平台分配的商户号(15位)
-	AppID     string `json:"appid" `     // 应用ID - 平台分配的APPID(8位)
-	TrxStatus string `json:"trxstatus" ` // 交易状态 - 交易的状态(4位)
-	RandomStr string `json:"randomstr"`  // 随机字符串 - 随机生成的字符串(32位)
-	ErrMsg    string `json:"errmsg" `    // 错误原因 - 失败的原因说明(100位)
-	Sign      string `json:"sign" `      // 签名(32位)
-}
+// 交易状态常量
+const (
+	TradeStatusSuccess = "SUCCESS" // 支付成功
+	TradeStatusFailed  = "FAILED"  // 支付失败
+	TradeStatusPending = "PENDING" // 处理中
+	TradeStatusClosed  = "CLOSED"  // 已关闭
+)
 
-// 回掉信息结构
-type Notify struct {
-	AppID       string `json:"appid"`       // 收银宝APPID
-	OutTrxID    string `json:"outtrxid"`    // 第三方交易号(暂未启用)
-	TrxCode     string `json:"trxcode"`     // 交易类型
-	TrxID       string `json:"trxid"`       // 收银宝交易单号
-	InitAmt     int    `json:"initamt"`     // 原始下单金额
-	TrxAmt      int    `json:"trxamt"`      // 交易金额(单位：分)
-	TrxDate     string `json:"trxdate"`     // 交易请求日期(yyyymmdd)
-	PayTime     string `json:"paytime"`     // 交易完成时间(yyyymmddhhmmss)
-	ChnlTrxID   string `json:"chnltrxid"`   // 渠道流水号
-	TrxStatus   string `json:"trxstatus"`   // 交易结果码
-	CusID       string `json:"cusid"`       // 商户编号
-	TermNo      string `json:"termno"`      // 终端编号
-	TermBatchID string `json:"termbatchid"` // 终端批次号
-	TermTraceNo string `json:"termtraceno"` // 终端流水号
-	TermAuthNo  string `json:"termauthno"`  // 终端授权码
-	TermRefNum  string `json:"termrefnum"`  // 终端参考号
-	TrxReserved string `json:"trxreserved"` // 业务关联内容
-	SrcTrxID    string `json:"srctrxid"`    // 原交易流水
-	CusOrderID  string `json:"cusorderid"`  // 业务流水(统一下单对应的reqsn订单号)
-	Acct        string `json:"acct"`        // 交易账号
-	Fee         string `json:"fee"`         // 手续费(单位：分)
-	SignType    string `json:"signtype"`    // 签名类型
-	CmID        string `json:"cmid"`        // 渠道子商户号
-	ChnlID      string `json:"chnlid"`      // 渠道号
-	ChnlData    string `json:"chnldata"`    // 渠道信息
-	AcctType    string `json:"accttype"`    // 借贷标识
-	BankCode    string `json:"bankcode"`    // 发卡行
-	LogonID     string `json:"logonid"`     // 支付宝买家账号
-	Sign        string `json:"sign"`        // sign校验码
-	TlOpenID    string `json:"tlopenid"`    // 通联渠道侧OPENID
-}
+// 签名类型常量
+const (
+	SignTypeSM2 = "SM2"
+	SignTypeRSA = "RSA"
+)
 
-// 查询订单响应
-type QueryResponse struct {
-	// 通信标识
-	RetCode string `json:"retcode" xml:"retcode"` // 返回码 SUCCESS/FAIL
-	RetMsg  string `json:"retmsg" xml:"retmsg"`   // 返回码说明
+// 支付来源常量
+const (
+	PaySourceDefault = "0" // 默认支付来源
+	PaySourceWap     = "1" // WAP支付
+)
 
-	// 业务字段 (仅当RetCode为SUCCESS时返回)
-	CusID      string `json:"cusid"`      // 商户号
-	AppID      string `json:"appid"`      // 应用ID
-	TrxID      string `json:"trxid"`      // 平台交易单号
-	ChnlTrxID  string `json:"chnltrxid"`  // 支付渠道交易单号
-	ReqSn      string `json:"reqsn"`      // 商户订单号
-	TrxCode    string `json:"trxcode"`    // 交易类型
-	TrxAmt     int    `json:"trxamt"`     // 交易金额(分)
-	TrxStatus  string `json:"trxstatus"`  // 交易状态
-	Acct       string `json:"acct"`       // 支付平台用户标识
-	FinTime    string `json:"fintime"`    // 交易完成时间 yyyyMMddHHmmss
-	RandomStr  string `json:"randomstr"`  // 随机字符串
-	ErrMsg     string `json:"errmsg"`     // 错误原因
-	CmID       string `json:"cmid" `      // 渠道子商户号
-	ChnlID     string `json:"chnlid"`     // 渠道号
-	InitAmt    int    `json:"initamt"`    // 原交易金额(分)
-	Fee        int    `json:"fee" `       // 手续费(分)
-	ChnlData   string `json:"chnldata" `  // 渠道信息
-	AcctType   string `json:"accttype" `  // 借贷标识
-	BankCode   string `json:"bankcode" `  // 所属银行
-	LogonID    string `json:"logonid" `   // 买家账号
-	TlOpenID   string `json:"tlopenid" `  // 通联渠道侧OPENID
-	TrxReserve string `json:"trxreserve"` // 交易备注
-	Sign       string `json:"sign" `      // 签名
-}
+// 支付方式常量
+const (
+	PayTypeWechat = "1" // 微信支付
+	PayTypeAlipay = "2" // 支付宝
+	PayTypeSmall  = "3" // 微信小程序
+)
 
-// 生成支付信息
+// 支付请求参数
 type PayRequest struct {
-	TrxAmt    int    `json:"trxamt"` //单位为分
-	Reqsn     string `json:"reqsn"`  //商户订单号
-	Validtime string `json:"validtime"`
-	NotifyUrl string `json:"notify_url"`
-	Body      string `json:"body"` //订单标题
-	Remark    string `json:"remark"`
+	GoodsName  string `json:"goodsName"`  // 商品名称
+	OutOrderNo string `json:"outOrderNo"` // 商户订单号
+	TransAmt   string `json:"transAmt"`   // 交易金额（分）
+	PaySource  string `json:"paySource"`  // 支付来源
+	PayType    string `json:"payType"`    // 支付方式
+	AppId      string `json:"appId"`      // 应用ID（微信小程序支付）
+	OpenId     string `json:"openId"`     // 用户ID（微信小程序支付）
+	ReturnUrl  string `json:"returnUrl"`  // 返回URL（固码支付）
+}
+
+// 退款请求参数
+type RefundRequest struct {
+	OutOrderNo   string `json:"outOrderNo"`   // 商户订单号
+	OrderNo      string `json:"orderNo"`      // 平台订单号
+	OutRefundNo  string `json:"outRefundNo"`  // 退款订单号
+	RefundAmount string `json:"refundAmount"` // 退款金额（分）
+}
+
+// 查询请求参数
+type QueryRequest struct {
+	OutOrderNo string `json:"outOrderNo"` // 商户订单号
+}
+
+// 统一响应结构
+type ApiResponse struct {
+	Code     string     `json:"code"`     // 响应码
+	Msg      string     `json:"msg"`      // 响应信息
+	Data     goutil.Map `json:"data"`     // 响应数据
+	Sign     string     `json:"sign"`     // 签名
+	SignType string     `json:"signType"` // 签名类型
+}
+
+// 回调通知结构体
+type NotifyRequest struct {
+	MchntId     string `json:"mchntId"`     // 商户号
+	StoreId     string `json:"storeId"`     // 门店号
+	ChannelId   string `json:"channelId"`   // 服务商号
+	OutOrderNo  string `json:"outOrderNo"`  // 外部订单号
+	TransAmt    int    `json:"transAmt"`    // 总金额
+	OrderNo     string `json:"orderNo"`     // 订单号
+	PayTime     string `json:"payTime"`     // 支付完成时间
+	PaySource   int    `json:"paySource"`   // 支付通道
+	PayType     int    `json:"payType"`     // 支付方式
+	TradeStatus int    `json:"tradeStatus"` // 交易状态
+	SignType    string `json:"signType"`    // 签名算法
+	Signature   string `json:"signature"`   // 签名
+	ContractId  string `json:"contractId"`  // 签约协议号（银联无感支付）
 }

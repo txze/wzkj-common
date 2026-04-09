@@ -2,261 +2,392 @@ package allinpay
 
 import (
 	"context"
-	"crypto"
-	"crypto/rsa"
-	"crypto/sha1"
-	"crypto/x509"
-	"encoding/base64"
 	"encoding/json"
-	"encoding/pem"
-	"fmt"
 	"net/http"
-	"reflect"
+	"strconv"
 
-	"github.com/go-pay/gopay"
-	"github.com/go-pay/util"
+	"github.com/hzxiao/goutil"
+	"github.com/jinzhu/now"
 	"github.com/pkg/errors"
 
+	"github.com/txze/wzkj-common/logger"
 	"github.com/txze/wzkj-common/pay/common"
-	"github.com/txze/wzkj-common/pay/config"
+	"github.com/txze/wzkj-common/pay/define"
+	"github.com/txze/wzkj-common/pkg/ierr"
+	"github.com/txze/wzkj-common/pkg/util"
 )
 
-type AllInPay struct {
-	config *AllInPayConfig
+// PayStrategy 支付策略接口
+type PayStrategy interface {
+	// Process 处理支付请求
+	Process(ctx context.Context, request *common.PaymentRequest) (goutil.Map, error)
+	// GetUrl 获取支付接口路径
+	GetUrl() string
 }
 
-func NewAllInPay(cfg config.PaymentConfig) *AllInPay {
-	return &AllInPay{
-		config: cfg.(*AllInPayConfig),
-	}
+// WxSmallPayStrategy 微信小程序支付策略
+type WxSmallPayStrategy struct{}
+
+// NewWxSmallPayStrategy 创建微信小程序支付策略
+func NewWxSmallPayStrategy() *WxSmallPayStrategy {
+	return &WxSmallPayStrategy{}
 }
 
-func (a *AllInPay) Pay(request *PayRequest) (map[string]interface{}, error) {
-	//TODO implement me
-	params := make(map[string]interface{})
-	params["cusid"] = a.config.CuSID
-	params["appid"] = a.config.AppId
-	params["version"] = 12
-	params["trxamt"] = request.TrxAmt
-	params["reqsn"] = request.Reqsn
-	params["validtime"] = request.Validtime
-	params["notify_url"] = request.NotifyUrl
-	params["body"] = request.Body
-	params["remark"] = request.Remark
-	params["paytype"] = "A02"
-	params["randomstr"] = util.RandomString(32)
-
-	sign, err := a.GenerateSign(params)
-	if err != nil {
-		return nil, err
-	}
-	params["sign"] = sign
-
+// Process 处理微信小程序支付请求
+func (s *WxSmallPayStrategy) Process(ctx context.Context, request *common.PaymentRequest) (goutil.Map, error) {
+	params := goutil.Map{}
+	params["goodsName"] = request.GoodsName
+	params["outOrderNo"] = request.OrderNo
+	params["transAmt"] = strconv.Itoa(request.Amount)
+	params["paySource"] = PaySourceDefault
+	params["payType"] = PayTypeSmall
+	params["funSource"] = "9"
 	return params, nil
 }
 
-func (a *AllInPay) QueryPayment(orderID string) (*common.UnifiedResponse, error) {
-	params := make(map[string]interface{})
-	params["cusid"] = a.config.CuSID
-	params["appid"] = a.config.AppId
-	params["version"] = 12
-	params["reqsn"] = orderID
-	params["signtype"] = "RSA"
-	params["randomstr"] = util.RandomString(32)
-	params["sign"], _ = a.GenerateSign(params)
-	rspStr, err := common.Execute(a.config.QueryOrderUrl, params)
-	if err != nil {
-		return nil, err
-	}
-	var rsp *QueryResponse
-	_ = json.Unmarshal([]byte(rspStr), &rsp)
-	var checkSign = make(map[string]interface{})
-	v := reflect.ValueOf(rsp)
-	t := reflect.TypeOf(rsp)
-	for i := 0; i < v.NumField(); i++ {
-		checkSign[t.Name()] = v.Field(i).Interface()
-	}
+// GetUrl 获取支付接口路径
+func (s *WxSmallPayStrategy) GetUrl() string {
+	return WxSmallUrl
+}
 
-	isCheck, err := a.VerifySign(checkSign)
-	if err != nil {
-		return nil, err
-	}
+// PayStrategyFactory 支付策略工厂
+type PayStrategyFactory struct{}
 
-	if isCheck == false {
-		return nil, errors.New("sign is invalid")
+// NewPayStrategyFactory 创建支付策略工厂
+func NewPayStrategyFactory() *PayStrategyFactory {
+	return &PayStrategyFactory{}
+}
+
+// CreateStrategy 创建支付策略
+func (f *PayStrategyFactory) CreateStrategy(productCode string) PayStrategy {
+	switch productCode {
+	case "WX_SMALL":
+		return NewWxSmallPayStrategy()
+	default:
+		return NewWxSmallPayStrategy()
 	}
-	var status bool
-	if gopay.SUCCESS == rsp.TrxStatus {
-		status = true
-	}
-	return &common.UnifiedResponse{
-		Platform:    a.GetType(),
-		OrderID:     rsp.ReqSn,
-		PlatformID:  rsp.ChnlTrxID,
-		Amount:      rsp.InitAmt,
-		Status:      status,
-		TradeStatus: rsp.TrxStatus,
-		PaidAmount:  rsp.TrxAmt,
-		//PaidTime:    rsp.FinTime,
-		Message: rsp,
+}
+
+type AllInPay struct {
+	config AllInPayConfig
+}
+
+func NewAllInPay(cfg AllInPayConfig) (*AllInPay, error) {
+	return &AllInPay{
+		config: cfg,
 	}, nil
 }
 
-func (a *AllInPay) Refund(ctx context.Context, request *common.RefundRequest) error {
-	return nil
+// Pay 统一支付方法
+func (a *AllInPay) Pay(ctx context.Context, request *common.PaymentRequest) (map[string]interface{}, error) {
+	// 创建支付策略
+	var strategy = NewPayStrategyFactory().CreateStrategy(request.ProductCode)
+
+	// 处理支付请求
+	params, err := strategy.Process(ctx, request)
+	if err != nil {
+		logger.FromContext(ctx).Error("AllInPay Strategy Process Failed", logger.Any("error", err))
+		return nil, err
+	}
+
+	// 执行请求
+	response, err := a.executeRequest(ctx, strategy.GetUrl(), params)
+	if err != nil {
+		logger.FromContext(ctx).Error("AllInPay Execute Request Failed", logger.Any("error", err))
+		return nil, err
+	}
+
+	// 根据支付类型返回不同的响应格式
+	switch request.ProductCode {
+	case "WX_SMALL":
+		return response, nil
+	default:
+		rsp := goutil.Map{}
+		rsp["payUrl"] = response["payUrl"]
+		return rsp, nil
+	}
 }
 
-func (a *AllInPay) GenerateSign(params map[string]interface{}) (string, error) {
-	//1. 拼接参数字符串
-	bufSignSrc := common.ToUrlParams(params)
-	//2. 处理私钥字符串格式
-	block, _ := pem.Decode([]byte(a.config.PrivateKey))
+func (a *AllInPay) QueryRefund(ctx context.Context, refundNo, orderNo string) (*common.RefundResponse, error) {
+	// 构建查询参数
+	params := goutil.Map{}
+	params["outOrderNo"] = orderNo
+	params["outRefundNo"] = refundNo
 
-	if block == nil {
-		return "", errors.Errorf("failed to parse PEM block containing the private key")
-	}
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	// 执行请求
+	response, err := a.executeRequest(ctx, RefundQueryUrl, params)
 	if err != nil {
-		// 尝试PKCS8格式
-		key, err := x509.ParsePKCS8PrivateKey(block.Bytes)
-		if err != nil {
-			return "", errors.Errorf("failed to parse private key: %v", err)
-		}
-		var ok bool
-		privateKey, ok = key.(*rsa.PrivateKey)
-		if !ok {
-			return "", errors.Errorf("not an RSA private key")
-		}
+		logger.FromContext(ctx).Error("AllInPay Query Refund Failed", logger.Any("error", err))
+		return nil, err
 	}
 
-	// 3. 使用SHA256进行RSA签名
-	hashed := sha1.Sum([]byte(bufSignSrc))
-	signature, err := rsa.SignPKCS1v15(nil, privateKey, crypto.SHA1, hashed[:])
-	if err != nil {
-		return "", errors.Errorf("sign failed: %v", err)
-	}
+	// 解析响应
+	refundAmount, _ := strconv.Atoi(response["refundAmount"].(string))
+	successTime := response["successTime"].(string)
+	createTime := response["createTime"].(string)
 
-	// 4. Base64编码签名结果
-	sign := base64.StdEncoding.EncodeToString(signature)
-	return sign, nil
+	return &common.RefundResponse{
+		UserReceivedAccount:  "",
+		SuccessTime:          successTime,
+		CreateTime:           createTime,
+		RefundStatus:         response.GetString("status") == TradeStatusSuccess,
+		OriginalRefundStatus: response.GetString("status"),
+		Message:              response.GetString("msg"),
+		RefundAmount:         refundAmount,
+		Data:                 response,
+	}, nil
 }
 
-func (a *AllInPay) VerifySign(params map[string]interface{}) (bool, error) {
-	sign := params["sign"].(string)
-	// 获取签名并从参数中移除
-	if sign == "" {
-		return false, errors.New("sign is required")
-	}
-	delete(params, "sign")
+func (a *AllInPay) QueryPayment(ctx context.Context, orderID string) (*common.UnifiedResponse, error) {
+	// 构建查询参数
+	params := goutil.Map{}
+	params["outOrderNo"] = orderID
 
-	bufSignSrc := common.ToUrlParams(params)
-
-	// RSA 公钥
-	publicKey := a.config.PublicKey
-	// 解码签名
-	signBytes, err := base64.StdEncoding.DecodeString(sign)
+	// 执行请求
+	response, err := a.executeRequest(ctx, QueryUrl, params)
 	if err != nil {
-		return false, errors.Errorf("failed to decode sign: %v", err)
+		logger.FromContext(ctx).Error("AllInPay Query Payment Failed", logger.Any("error", err))
+		return nil, err
 	}
 
-	// 解析公钥
-	block, _ := pem.Decode([]byte(publicKey))
-	if block == nil {
-		return false, fmt.Errorf("failed to parse public key")
+	// 解析响应
+	amount, _ := strconv.Atoi(response.GetString("transAmt"))
+	paidAmount, _ := strconv.Atoi(response.GetString("transAmt"))
+	payTime, _ := now.Parse("20060102150405", response.GetString("payTime"))
+
+	return &common.UnifiedResponse{
+		Platform:    a.GetType(),
+		OrderID:     response.GetString("outOrderNo"),
+		PlatformID:  response.GetString("orderNo"),
+		Amount:      amount,
+		Status:      response.GetString("tradeStatus") == TradeStatusSuccess,
+		TradeStatus: a.convertTradeStatus(response.GetString("tradeStatus")),
+		PaidAmount:  paidAmount,
+		PaidTime:    payTime,
+		Message:     response,
+	}, nil
+}
+
+func (a *AllInPay) Refund(ctx context.Context, request *common.RefundRequest) (*common.RefundOrderResponse, error) {
+	// 创建退款请求参数
+	refundReq := RefundRequest{
+		OutOrderNo:   request.OrderNo,
+		OutRefundNo:  request.RefundNo,
+		RefundAmount: strconv.Itoa(request.Amount),
 	}
 
-	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	// 构建请求参数
+	params := goutil.Map{}
+	params["outOrderNo"] = refundReq.OutOrderNo
+	params["outRefundNo"] = refundReq.OutRefundNo
+	params["refundAmount"] = refundReq.RefundAmount
+
+	// 执行请求
+	response, err := a.executeRequest(ctx, a.config.RefundUrl, params)
 	if err != nil {
-		return false, fmt.Errorf("failed to parse public key: %v", err)
+		logger.FromContext(ctx).Error("AllInPay Refund Failed", logger.Any("error", err))
+		return nil, err
 	}
 
-	rsaPubKey, ok := pub.(*rsa.PublicKey)
-	if !ok {
-		return false, fmt.Errorf("not an RSA public key")
-	}
+	// 解析响应
+	refundFee, _ := strconv.Atoi(response["refundAmount"].(string))
+	successTime := response["successTime"].(string)
+	createTime := response["createTime"].(string)
 
-	// 计算数据的哈希
-	hash := crypto.SHA1.New()
-	hash.Write([]byte(bufSignSrc))
-	hashed := hash.Sum(nil)
+	return &common.RefundOrderResponse{
+		OutRefundNo:   request.RefundNo,
+		TransactionId: response.GetString("orderNo"),
+		OutTradeNo:    request.OrderNo,
+		Status:        response.GetString("status"),
+		IsSuccess:     response.GetString("status") == TradeStatusSuccess,
+		PayerRefund:   refundFee,
+		RefundInfo:    response,
+		SuccessTime:   successTime,
+		CreateTime:    createTime,
+	}, nil
+}
 
-	// 验证签名
-	err = rsa.VerifyPKCS1v15(rsaPubKey, crypto.SHA1, hashed, signBytes)
+func (a *AllInPay) Close(ctx context.Context, orderId string) (bool, error) {
+	// 构建关闭订单参数
+	params := goutil.Map{}
+	params["outOrderNo"] = orderId
+
+	// 执行请求
+	response, err := a.executeRequest(ctx, RefundUrl, params)
 	if err != nil {
-		return false, nil // 签名验证失败，但不返回错误
+		logger.FromContext(ctx).Error("AllInPay Close Order Failed", logger.Any("error", err))
+		return false, err
 	}
 
-	return true, nil
+	return response.GetString("status") == TradeStatusSuccess, nil
 }
 
 func (a *AllInPay) VerifyNotification(req *http.Request) (*common.UnifiedResponse, error) {
-	if err := req.ParseForm(); err != nil {
-		return nil, err
-	}
-	var form map[string][]string = req.Form
-	params := make(map[string]interface{}, len(form)+1)
-	for k, v := range form {
-		if len(v) == 1 {
-			params[k] = v[0]
-		}
-	}
-
-	isCheck, err := a.VerifySign(params)
+	// 解析请求参数
+	bm, err := a.parseNotifyToBodyMap(req)
 	if err != nil {
 		return nil, err
 	}
 
-	if isCheck == false {
+	// 验证签名
+	isCheck, err := a.VerifySign(bm)
+	if err != nil {
+		return nil, err
+	}
+	if !isCheck {
 		return nil, errors.New("sign is invalid")
 	}
 
+	// 解析支付时间
+	payTime, _ := now.Parse("20060102150405", bm.GetString("payTime"))
+
+	// 解析金额
+	amount, err := strconv.Atoi(bm.GetString("transAmt"))
+	if err != nil {
+		return nil, ierr.NewIError(ierr.ParamErr, "amount is invalid")
+	}
+
+	// 解析交易状态
+	tradeStatus := bm.GetString("tradeStatus")
+
 	return &common.UnifiedResponse{
-		Platform:   a.GetType(),
-		OrderID:    params["cusorderid"].(string),
-		PlatformID: params["chnltrxid"].(string),
-		//Amount:     params["initamt"].(int),
-		//Status:     params["trxstatus"].(string),
-		//PaidAmount: params["trxamt"].(int),
-		//PaidTime: params["paytime"].(string),
-		Message: params,
+		Platform:    a.GetType(),
+		OrderID:     bm.GetString("outOrderNo"),
+		PlatformID:  bm.GetString("orderNo"),
+		Amount:      amount,
+		Status:      tradeStatus == "2", // 2: 支付成功
+		TradeStatus: a.convertTradeStatus(tradeStatus),
+		PaidAmount:  amount,
+		PaidTime:    payTime,
+		Message:     bm,
 	}, nil
 }
 
-func (a *AllInPay) Close(orderId string) (bool, error) {
-	params := make(map[string]interface{})
-	params["cusid"] = a.config.CuSID
-	params["appid"] = a.config.AppId
-	params["version"] = 12
-	params["oldreqsn"] = orderId
-	params["signtype"] = "RSA"
-	params["randomstr"] = util.RandomString(32)
-	params["sign"], _ = a.GenerateSign(params)
-	rspStr, err := common.Execute(a.config.CloseOrderUrl, params)
-	if err != nil {
-		return false, err
-	}
-
-	var rsp *CloseResponse
-	_ = json.Unmarshal([]byte(rspStr), &rsp)
-	var checkSign = make(map[string]interface{})
-	v := reflect.ValueOf(rsp)
-	t := reflect.TypeOf(rsp)
-	for i := 0; i < v.NumField(); i++ {
-		checkSign[t.Name()] = v.Field(i).Interface()
-	}
-
-	isCheck, err := a.VerifySign(checkSign)
-	if err != nil {
-		return false, err
-	}
-
-	if isCheck == false {
-		return false, errors.New("sign is invalid")
-	}
-
-	return rsp.TrxStatus == "0000", nil
+func (a *AllInPay) GenerateSign(params map[string]interface{}) (string, error) {
+	// 实现签名生成逻辑
+	signData := util.Hex(params)
+	return util.SM2Sign(a.config.PrivateKey, signData)
 }
+
+func (a *AllInPay) VerifySign(params map[string]interface{}) (bool, error) {
+	// 实现签名验证逻辑
+	sign := params["signature"].(string)
+	if sign == "" {
+		return false, errors.New("signature is required")
+	}
+	delete(params, "signature")
+
+	signData := util.Hex(params)
+	return util.SM2Verify(a.config.PublicKey, signData, sign)
+}
+
 func (a *AllInPay) GetType() string {
 	return a.config.GetType()
+}
+
+func (a *AllInPay) VerifySettleNotification(ctx context.Context, req *http.Request) (*common.SettleNotificationResponse, error) {
+	// 暂时未实现
+	return nil, ierr.NewIError(ierr.InternalError, "not implemented")
+}
+
+func (a *AllInPay) TradeOrderSettle(ctx context.Context, request common.TradeRoyaltyRateQueryRequestInterface) (*common.TradeRoyaltyRateQueryResponse, error) {
+	// 暂时未实现
+	return nil, ierr.NewIError(ierr.InternalError, "not implemented")
+}
+
+func (a *AllInPay) ConfirmSettle(ctx context.Context, request common.SettleConfirmRequestInterface) (*common.SettleConfirmResponse, error) {
+	// 暂时未实现
+	return nil, ierr.NewIError(ierr.InternalError, "not implemented")
+}
+
+// 执行请求
+func (a *AllInPay) executeRequest(ctx context.Context, urlPath string, params goutil.Map) (goutil.Map, error) {
+	// 添加基础参数
+	params["mchntId"] = a.config.CuSID
+	params["storeId"] = a.config.StoreId
+	params["channelId"] = a.config.ChannelId
+	params["notifyUrl"] = a.config.NotifyUrl
+	params["signType"] = a.config.SignType
+	params["appId"] = a.config.AppId
+
+	// 生成签名
+	signData := util.Hex(params)
+	signature, err := util.SM2Sign(a.config.PrivateKey, signData)
+	if err != nil {
+		return nil, err
+	}
+	params["signature"] = signature
+
+	// 验证签名
+	valid, err := util.SM2Verify(a.config.PublicKey, signData, signature)
+	if err != nil {
+		return nil, err
+	}
+	if !valid {
+		return nil, errors.New("invalid signature")
+	}
+
+	// 发送请求
+	fullUrl := a.config.PayDomain + urlPath
+	response, err := common.Execute(fullUrl, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// 解析响应
+	var apiRsp ApiResponse
+	if err := json.Unmarshal([]byte(response), &apiRsp); err != nil {
+		return nil, errors.Errorf("failed to unmarshal response: %v", err)
+	}
+
+	if apiRsp.Code != "0000" {
+		return nil, errors.Errorf("api error: %s", apiRsp.Msg)
+	}
+
+	// 验证响应签名
+	if apiRsp.Sign != "" {
+		// 构建验签数据
+		signData := util.Hex(apiRsp.Data)
+		// 验证签名
+		valid, err := util.SM2Verify(a.config.PublicKey, signData, apiRsp.Sign)
+		if err != nil {
+			return nil, errors.Errorf("failed to verify response signature: %v", err)
+		}
+		if !valid {
+			return nil, errors.New("invalid response signature")
+		}
+	}
+
+	return apiRsp.Data, nil
+}
+
+// 转换交易状态
+func (a *AllInPay) convertTradeStatus(status string) string {
+	switch status {
+	case "2": // 支付成功
+		return define.StatusSuccess
+	case "1": // 处理中
+		return define.StatusPending
+	case "3": // 支付失败
+		return define.StatusFail
+	case "4": // 已关闭
+		return define.StatusClose
+	default:
+		return define.StatusFail
+	}
+}
+
+// parseNotifyToBodyMap 解析通知请求为 BodyMap
+func (a *AllInPay) parseNotifyToBodyMap(req *http.Request) (goutil.Map, error) {
+	if err := req.ParseForm(); err != nil {
+		return nil, err
+	}
+	form := req.Form
+	bm := goutil.Map{}
+	for k, v := range form {
+		if len(v) == 1 {
+			bm[k] = v[0]
+		}
+	}
+	return bm, nil
 }
