@@ -7,6 +7,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v9"
 )
 
+var esTypedClient *EsTypedClient
+
 type EsTypedClient struct {
 	es   *elasticsearch.TypedClient
 	once sync.Once
@@ -28,7 +30,7 @@ func New(addresses []string, username, password string, transport *http.Transpor
 		panic("invalid elasticsearch config: password is empty")
 	}
 	// 使用单例模式创建EsTypedClient实例
-	var c = &EsTypedClient{}
+	var esTypedClient = &EsTypedClient{}
 	if transport == nil {
 		transport = &http.Transport{}
 	}
@@ -39,15 +41,15 @@ func New(addresses []string, username, password string, transport *http.Transpor
 		Transport: transport,
 	}
 	var err error
-	c.once.Do(func() {
-		c.es, err = elasticsearch.NewTypedClient(cfg)
+	esTypedClient.once.Do(func() {
+		esTypedClient.es, err = elasticsearch.NewTypedClient(cfg)
 		if err != nil {
 			panic(err)
 		}
 	})
-	return c
+	return esTypedClient
 }
 
-func (c *EsTypedClient) Client() *elasticsearch.TypedClient {
-	return c.es
+func Client() *elasticsearch.TypedClient {
+	return esTypedClient.es
 }
