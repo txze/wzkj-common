@@ -14,6 +14,8 @@ type EsTypedClient struct {
 	once sync.Once
 }
 
+var esClient *EsTypedClient
+
 // New 创建EsTypedClient实例
 // addresses: Elasticsearch节点地址列表
 // username: Elasticsearch用户名
@@ -50,6 +52,10 @@ func New(addresses []string, username, password string, transport *http.Transpor
 	return esTypedClient
 }
 
+func (c *EsTypedClient) Client() *elasticsearch.TypedClient {
+	return c.es
+}
+
 func Client() *elasticsearch.TypedClient {
-	return esTypedClient.es
+	return esClient.es
 }

@@ -8,67 +8,119 @@ import (
 	"github.com/spf13/viper"
 )
 
-func GetTransport(v *viper.Viper) *http.Transport {
-	var config ElasticsearchConfig
-	v.Sub("elastic").Unmarshal(&config)
+func GetTransportFromViper(viper *viper.Viper, key string) *http.Transport {
+	if key == "" {
+		key = "elastic.transport"
+	}
+	var transportConfig TransportConfig
+	err := viper.Sub(key).Unmarshal(&transportConfig)
 
+	if err != nil {
+		panic(err)
+	}
+	if transportConfig.DialerConfig.Timeout == 0 {
+		transportConfig.DialerConfig.Timeout = DefaultTransportConfig.DialerConfig.Timeout
+	}
+
+	if transportConfig.DialerConfig.KeepAlive == 0 {
+		transportConfig.DialerConfig.KeepAlive = DefaultTransportConfig.DialerConfig.KeepAlive
+	}
+	if transportConfig.ExpectContinueTimeout == 0 {
+		transportConfig.ExpectContinueTimeout = DefaultTransportConfig.ExpectContinueTimeout
+	}
+	if transportConfig.DisableCompression {
+		transportConfig.DisableCompression = DefaultTransportConfig.DisableCompression
+	}
+	if transportConfig.MaxIdleConnsPerHost == 0 {
+		transportConfig.MaxIdleConnsPerHost = DefaultTransportConfig.MaxIdleConnsPerHost
+	}
+	if transportConfig.IdleConnTimeout == 0 {
+		transportConfig.IdleConnTimeout = DefaultTransportConfig.IdleConnTimeout
+	}
+	if transportConfig.MaxConnsPerHost == 0 {
+		transportConfig.MaxConnsPerHost = DefaultTransportConfig.MaxConnsPerHost
+	}
+	if transportConfig.MaxIdleConns == 0 {
+		transportConfig.MaxIdleConns = DefaultTransportConfig.MaxIdleConns
+	}
+	if transportConfig.ResponseHeaderTimeout == 0 {
+		transportConfig.ResponseHeaderTimeout = DefaultTransportConfig.ResponseHeaderTimeout
+	}
+	if transportConfig.TLSHandshakeTimeout == 0 {
+		transportConfig.TLSHandshakeTimeout = DefaultTransportConfig.TLSHandshakeTimeout
+	}
+	if transportConfig.DialerConfig.Timeout == 0 {
+		transportConfig.DialerConfig.Timeout = DefaultTransportConfig.DialerConfig.Timeout
+	}
+	if transportConfig.DialerConfig.KeepAlive == 0 {
+		transportConfig.DialerConfig.KeepAlive = DefaultTransportConfig.DialerConfig.KeepAlive
+	}
+
+	return GetTransport(&transportConfig)
+}
+
+func GetDefaultTransport() *http.Transport {
+	return GetTransport(DefaultTransportConfig)
+}
+
+func GetTransport(transportConfig *TransportConfig) *http.Transport {
 	transport := &http.Transport{}
 
-	if config.TransportConfig.ExpectContinueTimeout > 0 {
-		transport.ExpectContinueTimeout = config.TransportConfig.ExpectContinueTimeout
+	if transportConfig.ExpectContinueTimeout > 0 {
+		transport.ExpectContinueTimeout = transportConfig.ExpectContinueTimeout
 	} else {
 		transport.ExpectContinueTimeout = DefaultTransportConfig.ExpectContinueTimeout
 	}
 	//
-	if config.TransportConfig.DisableCompression {
-		transport.DisableCompression = config.TransportConfig.DisableCompression
+	if transportConfig.DisableCompression {
+		transport.DisableCompression = transportConfig.DisableCompression
 	} else {
 		transport.DisableCompression = DefaultTransportConfig.DisableCompression
 	}
-	if config.TransportConfig.MaxIdleConnsPerHost > 0 {
-		transport.MaxIdleConnsPerHost = config.TransportConfig.MaxIdleConnsPerHost
+	if transportConfig.MaxIdleConnsPerHost > 0 {
+		transport.MaxIdleConnsPerHost = transportConfig.MaxIdleConnsPerHost
 	} else {
 		transport.MaxIdleConnsPerHost = DefaultTransportConfig.MaxIdleConnsPerHost
 	}
-	if config.TransportConfig.MaxIdleConns > 0 {
-		transport.MaxIdleConns = config.TransportConfig.MaxIdleConns
+	if transportConfig.MaxIdleConns > 0 {
+		transport.MaxIdleConns = transportConfig.MaxIdleConns
 	} else {
 		transport.MaxIdleConns = DefaultTransportConfig.MaxIdleConns
 	}
-	if config.TransportConfig.IdleConnTimeout > 0 {
-		transport.IdleConnTimeout = config.TransportConfig.IdleConnTimeout
+	if transportConfig.IdleConnTimeout > 0 {
+		transport.IdleConnTimeout = transportConfig.IdleConnTimeout
 	} else {
 		transport.IdleConnTimeout = DefaultTransportConfig.IdleConnTimeout
 	}
-	if config.TransportConfig.IdleConnTimeout > 0 {
-		transport.IdleConnTimeout = config.TransportConfig.IdleConnTimeout
+	if transportConfig.IdleConnTimeout > 0 {
+		transport.IdleConnTimeout = transportConfig.IdleConnTimeout
 	} else {
 		transport.IdleConnTimeout = DefaultTransportConfig.IdleConnTimeout
 	}
-	if config.TransportConfig.MaxConnsPerHost > 0 {
-		transport.MaxConnsPerHost = config.TransportConfig.MaxConnsPerHost
+	if transportConfig.MaxConnsPerHost > 0 {
+		transport.MaxConnsPerHost = transportConfig.MaxConnsPerHost
 	} else {
 		transport.MaxConnsPerHost = DefaultTransportConfig.MaxConnsPerHost
 	}
-	if config.TransportConfig.ResponseHeaderTimeout > 0 {
-		transport.ResponseHeaderTimeout = config.TransportConfig.ResponseHeaderTimeout
+	if transportConfig.ResponseHeaderTimeout > 0 {
+		transport.ResponseHeaderTimeout = transportConfig.ResponseHeaderTimeout
 	} else {
 		transport.ResponseHeaderTimeout = DefaultTransportConfig.ResponseHeaderTimeout
 	}
-	if config.TransportConfig.TLSHandshakeTimeout > 0 {
-		transport.TLSHandshakeTimeout = config.TransportConfig.TLSHandshakeTimeout
+	if transportConfig.TLSHandshakeTimeout > 0 {
+		transport.TLSHandshakeTimeout = transportConfig.TLSHandshakeTimeout
 	} else {
 		transport.TLSHandshakeTimeout = DefaultTransportConfig.TLSHandshakeTimeout
 	}
 	var dialTimeout, dialKeepAlive time.Duration
 
-	if config.TransportConfig.DialerConfig.Timeout > 0 {
-		dialTimeout = config.TransportConfig.DialerConfig.Timeout
+	if transportConfig.DialerConfig.Timeout > 0 {
+		dialTimeout = transportConfig.DialerConfig.Timeout
 	} else {
 		dialTimeout = DefaultTransportConfig.DialerConfig.Timeout
 	}
-	if config.TransportConfig.DialerConfig.KeepAlive > 0 {
-		dialKeepAlive = config.TransportConfig.DialerConfig.KeepAlive
+	if transportConfig.DialerConfig.KeepAlive > 0 {
+		dialKeepAlive = transportConfig.DialerConfig.KeepAlive
 	} else {
 		dialKeepAlive = DefaultTransportConfig.DialerConfig.KeepAlive
 	}
