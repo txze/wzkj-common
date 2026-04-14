@@ -25,31 +25,6 @@ type PayStrategy interface {
 	GetUrl() string
 }
 
-// WxSmallPayStrategy 微信小程序支付策略
-type WxSmallPayStrategy struct{}
-
-// NewWxSmallPayStrategy 创建微信小程序支付策略
-func NewWxSmallPayStrategy() *WxSmallPayStrategy {
-	return &WxSmallPayStrategy{}
-}
-
-// Process 处理微信小程序支付请求
-func (s *WxSmallPayStrategy) Process(ctx context.Context, request *common.PaymentRequest) (goutil.Map, error) {
-	params := goutil.Map{}
-	params["goodsName"] = request.GoodsName
-	params["outOrderNo"] = request.OrderNo
-	params["transAmt"] = strconv.Itoa(request.Amount)
-	params["paySource"] = PaySourceDefault
-	params["payType"] = PayTypeSmall
-	params["funSource"] = "9"
-	return params, nil
-}
-
-// GetUrl 获取支付接口路径
-func (s *WxSmallPayStrategy) GetUrl() string {
-	return WxSmallUrl
-}
-
 // PayStrategyFactory 支付策略工厂
 type PayStrategyFactory struct{}
 
@@ -61,7 +36,7 @@ func NewPayStrategyFactory() *PayStrategyFactory {
 // CreateStrategy 创建支付策略
 func (f *PayStrategyFactory) CreateStrategy(productCode string) PayStrategy {
 	switch productCode {
-	case "WX_SMALL":
+	case "WX_SMALL", "WX_SMALL_APP":
 		return NewWxSmallPayStrategy()
 	default:
 		return NewWxSmallPayStrategy()
@@ -91,7 +66,7 @@ func (a *AllInPay) Pay(ctx context.Context, request *common.PaymentRequest) (map
 	}
 
 	// 执行请求
-	response, err := a.executeRequest(ctx, strategy.GetUrl(), params)
+	response, err := a.executeRequest(ctx, a.config.GetPayHost()+strategy.GetUrl(), params)
 	if err != nil {
 		logger.FromContext(ctx).Error("AllInPay Execute Request Failed", logger.Any("error", err))
 		return nil, err
@@ -303,7 +278,7 @@ func (a *AllInPay) ConfirmSettle(ctx context.Context, request common.SettleConfi
 // 执行请求
 func (a *AllInPay) executeRequest(ctx context.Context, urlPath string, params goutil.Map) (goutil.Map, error) {
 	// 添加基础参数
-	params["mchntId"] = a.config.CuSID
+	params["mchntId"] = a.config.MchntId
 	params["storeId"] = a.config.StoreId
 	params["channelId"] = a.config.ChannelId
 	params["notifyUrl"] = a.config.NotifyUrl
@@ -340,8 +315,8 @@ func (a *AllInPay) executeRequest(ctx context.Context, urlPath string, params go
 		return nil, errors.Errorf("failed to unmarshal response: %v", err)
 	}
 
-	if apiRsp.Code != "0000" {
-		return nil, errors.Errorf("api error: %s", apiRsp.Msg)
+	if apiRsp.RespCode != strconv.Itoa(http.StatusOK) {
+		return nil, errors.Errorf("api error: %s %s", apiRsp.RespCode, apiRsp.RespDesc)
 	}
 
 	// 验证响应签名

@@ -29,13 +29,21 @@ const (
 	PayTypeWechat = "1" // 微信支付
 	PayTypeAlipay = "2" // 支付宝
 	PayTypeSmall  = "3" // 微信小程序
+	PayTypeApp    = "4" // 应用支付
+)
+
+const (
+	// 沙盒环境
+	SandboxUrl = "https://zjk.numrd.com/aps/buybal-api/"
+	// 生产环境
+	ProdUrl = "https://s.zjkccb.com/aps/buybal-api/"
 )
 
 // 支付请求参数
 type PayRequest struct {
 	GoodsName  string `json:"goodsName"`  // 商品名称
 	OutOrderNo string `json:"outOrderNo"` // 商户订单号
-	TransAmt   string `json:"transAmt"`   // 交易金额（分）
+	TransAmt   int    `json:"transAmt"`   // 交易金额（分）
 	PaySource  string `json:"paySource"`  // 支付来源
 	PayType    string `json:"payType"`    // 支付方式
 	AppId      string `json:"appId"`      // 应用ID（微信小程序支付）
@@ -58,11 +66,10 @@ type QueryRequest struct {
 
 // 统一响应结构
 type ApiResponse struct {
-	Code     string     `json:"code"`     // 响应码
-	Msg      string     `json:"msg"`      // 响应信息
-	Data     goutil.Map `json:"data"`     // 响应数据
-	Sign     string     `json:"sign"`     // 签名
-	SignType string     `json:"signType"` // 签名类型
+	RespCode string     `json:"respCode"`  // 响应码
+	RespDesc string     `json:"respDesc"`  // 响应信息
+	Data     goutil.Map `json:"data"`      // 响应数据
+	Sign     string     `json:"signature"` // 签名
 }
 
 // 回调通知结构体

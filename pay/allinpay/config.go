@@ -15,7 +15,7 @@ const (
 
 type AllInPayConfig struct {
 	AppId      string // 应用ID
-	CuSID      string // 商户号
+	MchntId    string // 商户号
 	StoreId    string // 门店号
 	ChannelId  string // 渠道号
 	PrivateKey string // 私钥
@@ -30,4 +30,11 @@ type AllInPayConfig struct {
 
 func (a *AllInPayConfig) GetType() string {
 	return "allinpay"
+}
+
+func (a *AllInPayConfig) GetPayHost() string {
+	if a.IsProd {
+		return ProdUrl
+	}
+	return SandboxUrl
 }
