@@ -61,14 +61,12 @@ func (a *AllInPay) Pay(ctx context.Context, request *common.PaymentRequest) (map
 	// 处理支付请求
 	params, err := strategy.Process(ctx, request)
 	if err != nil {
-		logger.FromContext(ctx).Error("AllInPay Strategy Process Failed", logger.Any("error", err))
 		return nil, err
 	}
 
 	// 执行请求
 	response, err := a.executeRequest(ctx, a.config.GetPayHost()+strategy.GetUrl(), params)
 	if err != nil {
-		logger.FromContext(ctx).Error("AllInPay Execute Request Failed", logger.Any("error", err))
 		return nil, err
 	}
 
@@ -310,21 +308,21 @@ func (a *AllInPay) executeRequest(ctx context.Context, urlPath string, params go
 	}
 
 	// 解析响应
-	var apiRsp ApiResponse
+	var apiRsp goutil.Map
 	if err := json.Unmarshal([]byte(response), &apiRsp); err != nil {
 		return nil, errors.Errorf("failed to unmarshal response: %v", err)
 	}
 
-	if apiRsp.RespCode != strconv.Itoa(http.StatusOK) {
-		return nil, errors.Errorf("api error: %s %s", apiRsp.RespCode, apiRsp.RespDesc)
+	if apiRsp.GetString("respCode") != strconv.Itoa(http.StatusOK) {
+		return nil, errors.Errorf("api error: %s %s", apiRsp.GetString("respCode"), apiRsp.GetString("respDesc"))
 	}
 
 	// 验证响应签名
-	if apiRsp.Sign != "" {
+	if apiRsp.GetString("signature") != "" {
 		// 构建验签数据
-		signData := util.Hex(apiRsp.Data)
+		signData := util.Hex(apiRsp)
 		// 验证签名
-		valid, err := util.SM2Verify(a.config.PublicKey, signData, apiRsp.Sign)
+		valid, err := util.SM2Verify(a.config.PublicKey, signData, apiRsp.GetString("signature"))
 		if err != nil {
 			return nil, errors.Errorf("failed to verify response signature: %v", err)
 		}
@@ -333,7 +331,7 @@ func (a *AllInPay) executeRequest(ctx context.Context, urlPath string, params go
 		}
 	}
 
-	return apiRsp.Data, nil
+	return apiRsp, nil
 }
 
 // 转换交易状态

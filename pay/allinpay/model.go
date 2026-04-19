@@ -1,9 +1,5 @@
 package allinpay
 
-import (
-	"github.com/hzxiao/goutil"
-)
-
 // 交易状态常量
 const (
 	TradeStatusSuccess = "SUCCESS" // 支付成功
@@ -66,10 +62,21 @@ type QueryRequest struct {
 
 // 统一响应结构
 type ApiResponse struct {
-	RespCode string     `json:"respCode"`  // 响应码
-	RespDesc string     `json:"respDesc"`  // 响应信息
-	Data     goutil.Map `json:"data"`      // 响应数据
-	Sign     string     `json:"signature"` // 签名
+	RespCode   string `json:"respCode"`  // 响应码
+	RespDesc   string `json:"respDesc"`  // 响应信息
+	Sign       string `json:"signature"` // 签名
+	SignType   string `json:"signType,omitempty"`
+	Package    string `json:"package"`
+	OrderNo    string `json:"orderNo"`
+	StoreId    string `json:"storeId"`
+	OutOrderNo string `json:"outOrderNo"`
+	NonceStr   string `json:"nonceStr"`
+	TimeStamp  string `json:"timeStamp"`
+	PaySign    string `json:"paySign"`
+	AppId      string `json:"appId"`
+	MchntId    string `json:"mchntId"`
+	PartnerId  string `json:"partnerId"`
+	PrepayId   string `json:"prepayId"`
 }
 
 // 回调通知结构体

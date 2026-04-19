@@ -63,6 +63,9 @@ func Execute(postUrl string, params map[string]interface{}) (string, error) {
 		return "", err
 	}
 
+	// 设置请求头
+	req.Header.Set("Content-Type", "application/json")
+
 	// 发送HTTP请求
 	resp, err := client.Do(req)
 	if err != nil {

@@ -3,6 +3,7 @@ package util
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"sort"
 	"strings"
@@ -54,7 +55,7 @@ func SM2Sign(privateKey string, data string) (string, error) {
 		return "", fmt.Errorf("failed to sign data: %v", err)
 	}
 
-	return base64.StdEncoding.EncodeToString(signature), nil
+	return hex.EncodeToString(signature), nil
 }
 
 // SM2Verify SM2验签
@@ -70,7 +71,7 @@ func SM2Verify(publicKey string, data string, signature string) (bool, error) {
 	}
 
 	// 解码签名
-	signBytes, err := base64.StdEncoding.DecodeString(signature)
+	signBytes, err := hex.DecodeString(signature)
 	if err != nil {
 		return false, fmt.Errorf("failed to decode signature: %v", err)
 	}
