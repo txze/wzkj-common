@@ -2,7 +2,6 @@ package tencent
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/tencentyun/tls-sig-api-v2-golang/tencentyun"
 )

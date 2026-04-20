@@ -48,17 +48,8 @@ type PhoneInfo struct {
 var defaultClient *Client
 
 // Init 初始化极光客户端（参考其他服务的初始化方式）
-func Init() error {
-	config, err := LoadConfig()
-	if err != nil {
-		return fmt.Errorf("加载极光配置失败: %v", err)
-	}
-
-	if err := config.Validate(); err != nil {
-		return fmt.Errorf("极光配置验证失败: %v", err)
-	}
-
-	client, err := NewClient(config)
+func Init(config *Config) error {
+	client, err := newClient(config)
 	if err != nil {
 		return fmt.Errorf("创建极光客户端失败: %v", err)
 	}
@@ -73,7 +64,7 @@ func GetClient() *Client {
 }
 
 // NewClient 创建新的极光客户端
-func NewClient(config *Config) (*Client, error) {
+func newClient(config *Config) (*Client, error) {
 	if err := config.Validate(); err != nil {
 		return nil, err
 	}
