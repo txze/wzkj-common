@@ -7,9 +7,19 @@ import (
 
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat"
-
-	"github.com/spf13/viper"
 )
+
+type Config struct {
+	IsTest          bool   `mapstructure:"is_test"`
+	AppID           string `mapstructure:"appid"`
+	MchID           string `mapstructure:"mchid"`
+	PayKey          string `mapstructure:"pay_key"`
+	IsProd          bool   `mapstructure:"is_prod"`
+	RefundNotifyUrl string `mapstructure:"refund_notify_url"`
+	CertFile        string `mapstructure:"certFile"`
+	KeyFile         string `mapstructure:"keyFile"`
+	Pkcs12File      string `mapstructure:"pkcs12File"`
+}
 
 type PayClient struct {
 	*wechat.Client
@@ -19,29 +29,35 @@ type PayClient struct {
 
 var payClient *PayClient
 
-func InitPay() error {
-	if viper.GetBool("wechat.is_test") {
+func InitPayWithConfig(cfg *Config) error {
+	if cfg == nil {
+		return fmt.Errorf("配置不能为空")
+	}
+
+	if cfg.IsTest {
 		return nil
 	}
+
 	payClient = new(PayClient)
 	payClient.Client = wechat.NewClient(
-		viper.GetString("wechat.appid"),
-		viper.GetString("wechat.mchid"),
-		viper.GetString("wechat.pay_key"),
-		viper.GetBool("wechat.is_prod"),
+		cfg.AppID,
+		cfg.MchID,
+		cfg.PayKey,
+		cfg.IsProd,
 	)
-	payClient.RefundNotifyUrl = viper.GetString("wechat.refund_notify_url")
+	payClient.RefundNotifyUrl = cfg.RefundNotifyUrl
+
 	var err error
 	err = payClient.AddCertPemFilePath(
-		viper.GetString("wechat.certFile"),
-		viper.GetString("wechat.keyFile"),
+		cfg.CertFile,
+		cfg.KeyFile,
 	)
 	if err != nil {
 		return err
 	}
 
 	err = payClient.AddCertPkcs12FilePath(
-		viper.GetString("wechat.pkcs12File"),
+		cfg.Pkcs12File,
 	)
 	if err != nil {
 		return err

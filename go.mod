@@ -2,8 +2,6 @@ module github.com/txze/wzkj-common
 
 go 1.21
 
-toolchain go1.24.1
-
 require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.11
 	github.com/alibabacloud-go/green-20220302/v2 v2.22.1
@@ -38,6 +36,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.10
 	go.mongodb.org/mongo-driver v1.17.1
 	go.uber.org/zap v1.27.0
+	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.0
 	gorm.io/gorm v1.26.0
@@ -146,6 +145,5 @@ require (
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

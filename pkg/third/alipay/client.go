@@ -2,8 +2,17 @@ package alipay
 
 import (
 	"github.com/smartwalle/alipay/v3"
-	"github.com/spf13/viper"
 )
+
+type Config struct {
+	AppID            string `mapstructure:"appid"`
+	PrivateKey       string `mapstructure:"private_key"`
+	IsProd           bool   `mapstructure:"is_prod"`
+	AppPublicCert    string `mapstructure:"app_public_cert"`
+	AlipayRootCert   string `mapstructure:"alipay_root_cert"`
+	AlipayPublicCert string `mapstructure:"alipay_public_cert"`
+	EncryptKey       string `mapstructure:"encrypt_key"`
+}
 
 type AliPayClient struct {
 	*alipay.Client
@@ -12,39 +21,31 @@ type AliPayClient struct {
 var aliPayClient *AliPayClient
 var alipayAppClient *AliPayClient
 
-func InitAliPay() error {
+func InitAliPayWithConfig(cfg *Config) error {
 	var client, err = alipay.New(
-		viper.GetString("alipay.appid"),
-		viper.GetString("alipay.private_key"),
-		viper.GetBool("alipay.is_prod"),
+		cfg.AppID,
+		cfg.PrivateKey,
+		cfg.IsProd,
 		alipay.WithProductionGateway(""))
 	if err != nil {
 		return err
 	}
 
-	// 加载应用公钥证书
-	if err = client.LoadAppCertPublicKeyFromFile(viper.GetString("alipay.app_public_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAppCertPublicKeyFromFile(cfg.AppPublicCert); err != nil {
 		return err
 	}
 
-	// 加载支付宝根证书
-	if err = client.LoadAliPayRootCertFromFile(viper.GetString("alipay.alipay_root_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAliPayRootCertFromFile(cfg.AlipayRootCert); err != nil {
 		return err
 	}
 
-	// 加载支付宝公钥证书
-	if err = client.LoadAlipayCertPublicKeyFromFile(viper.GetString("alipay.alipay_public_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAlipayCertPublicKeyFromFile(cfg.AlipayPublicCert); err != nil {
 		return err
 	}
 
-	// 加载内容密钥，可选
-	var encryptKey = viper.GetString("alipay.encrypt_key")
+	var encryptKey = cfg.EncryptKey
 	if encryptKey != "" {
 		if err = client.SetEncryptKey(encryptKey); err != nil {
-			// 错误处理
 			return err
 		}
 	}
@@ -55,37 +56,29 @@ func InitAliPay() error {
 	return nil
 }
 
-func InitAliAppPay() error {
+func InitAliAppPayWithConfig(cfg *Config) error {
 	var client, err = alipay.New(
-		viper.GetString("alipay_app.appid"),
-		viper.GetString("alipay_app.private_key"),
-		viper.GetBool("alipay_app.is_prod"),
+		cfg.AppID,
+		cfg.PrivateKey,
+		cfg.IsProd,
 		alipay.WithProductionGateway(""))
 	if err != nil {
 		return err
 	}
 
-	// 加载应用公钥证书
-	if err = client.LoadAppCertPublicKeyFromFile(viper.GetString("alipay_app.app_public_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAppCertPublicKeyFromFile(cfg.AppPublicCert); err != nil {
 		return err
 	}
 
-	// 加载支付宝根证书
-	if err = client.LoadAliPayRootCertFromFile(viper.GetString("alipay_app.alipay_root_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAliPayRootCertFromFile(cfg.AlipayRootCert); err != nil {
 		return err
 	}
 
-	// 加载支付宝公钥证书
-	if err = client.LoadAlipayCertPublicKeyFromFile(viper.GetString("alipay_app.alipay_public_cert")); err != nil {
-		// 错误处理
+	if err = client.LoadAlipayCertPublicKeyFromFile(cfg.AlipayPublicCert); err != nil {
 		return err
 	}
 
-	// 加载内容密钥，可选
-	if err = client.SetEncryptKey(viper.GetString("alipay_app.encrypt_key")); err != nil {
-		// 错误处理
+	if err = client.SetEncryptKey(cfg.EncryptKey); err != nil {
 		return err
 	}
 
