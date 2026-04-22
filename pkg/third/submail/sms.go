@@ -6,20 +6,34 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/hzxiao/goutil"
-	"github.com/spf13/viper"
 )
+
+type Config struct {
+	AppID     string `mapstructure:"appid"`
+	Project   string `mapstructure:"project"`
+	Signature string `mapstructure:"signature"`
+}
 
 const SMS_STATUS_SUCCESS = "success"
 const SMS_STATUS_ERROR = "error"
 
 const SMS_URI_JSON = "https://api-v4.mysubmail.com/sms/xsend.json"
 
-func SendSMS(to string, vars string) error {
-	var appid = viper.GetString("sms.appid")
-	var project = viper.GetString("sms.project")
-	var signature = viper.GetString("sms.signature")
+var globalConfig *Config
 
-	return sendSMS(appid, project, to, vars, signature)
+func InitSMS(cfg *Config) {
+	globalConfig = cfg
+}
+
+func SendSMS(to string, vars string) error {
+	if globalConfig == nil {
+		return fmt.Errorf("SMS未初始化，请先调用InitSMS()")
+	}
+	return sendSMS(globalConfig.AppID, globalConfig.Project, to, vars, globalConfig.Signature)
+}
+
+func SendSMSWithConfig(cfg *Config, to string, vars string) error {
+	return sendSMS(cfg.AppID, cfg.Project, to, vars, cfg.Signature)
 }
 
 func sendSMS(appid, project string, to, vars, signature string) error {

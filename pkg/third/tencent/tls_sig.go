@@ -2,69 +2,56 @@ package tencent
 
 import (
 	"fmt"
-	"strconv"
 
-	"github.com/spf13/viper"
 	"github.com/tencentyun/tls-sig-api-v2-golang/tencentyun"
 )
 
-// TLSSigAPI 腾讯云TLS签名API封装
 type TLSSigAPI struct {
 	sdkAppID  int
 	secretKey string
 }
 
-// TLSSigResponse 签名响应
 type TLSSigResponse struct {
 	UserSig string `json:"usersig"`
 	Expire  int    `json:"expire"`
 	Error   string `json:"error,omitempty"`
 }
 
+type Config struct {
+	SDKAppID int    `mapstructure:"appid"`
+	Secret   string `mapstructure:"secret"`
+}
+
 var defaultTLSSigAPI *TLSSigAPI
 
-// InitTLSSig 初始化TLS签名API
-func InitTLSSig() error {
-	sdkAppIDStr := viper.GetString("tencent.im.appid")
-	secretKey := viper.GetString("tencent.im.secret")
-
-	// 检查配置是否完整
-	if sdkAppIDStr == "" {
-		return fmt.Errorf("腾讯云IM配置缺失: tencent.im.appid")
-	}
-	if secretKey == "" {
-		return fmt.Errorf("腾讯云IM配置缺失: tencent.im.secret")
+func InitTLSSigWithConfig(cfg *Config) error {
+	if cfg == nil {
+		return fmt.Errorf("配置不能为空")
 	}
 
-	// 将字符串转换为整数
-	sdkAppID, err := strconv.Atoi(sdkAppIDStr)
-	if err != nil {
-		return fmt.Errorf("腾讯云IM配置错误: tencent.im.appid 必须是数字, 当前值: %s, 错误: %v", sdkAppIDStr, err)
+	if cfg.Secret == "" {
+		return fmt.Errorf("腾讯云IM配置缺失: secret")
 	}
 
-	// 验证SDKAppID的有效性
-	if sdkAppID <= 0 {
-		return fmt.Errorf("腾讯云IM配置错误: tencent.im.appid 必须大于0, 当前值: %d", sdkAppID)
+	if cfg.SDKAppID <= 0 {
+		return fmt.Errorf("腾讯云IM配置错误: SDKAppID 必须大于0")
 	}
 
-	defaultTLSSigAPI = NewTLSSigAPI(sdkAppID, secretKey)
+	defaultTLSSigAPI = NewTLSSigAPI(cfg.SDKAppID, cfg.Secret)
 	return nil
 }
 
-// GetTLSSigAPI 获取TLS签名API实例
 func GetTLSSigAPI() *TLSSigAPI {
 	return defaultTLSSigAPI
 }
 
-// GetTLSSigAPISafe 安全获取TLS签名API实例，如果未初始化则返回错误
 func GetTLSSigAPISafe() (*TLSSigAPI, error) {
 	if defaultTLSSigAPI == nil {
-		return nil, fmt.Errorf("TLS签名API未初始化，请先调用InitTLSSig()")
+		return nil, fmt.Errorf("TLS签名API未初始化，请先调用InitTLSSigWithConfig()")
 	}
 	return defaultTLSSigAPI, nil
 }
 
-// NewTLSSigAPI 创建新的TLS签名API实例
 func NewTLSSigAPI(sdkAppID int, secretKey string) *TLSSigAPI {
 	return &TLSSigAPI{
 		sdkAppID:  sdkAppID,
@@ -72,22 +59,14 @@ func NewTLSSigAPI(sdkAppID int, secretKey string) *TLSSigAPI {
 	}
 }
 
-// GenUserSig 生成UserSig
-// userID: 用户ID
-// expire: 有效期（秒），建议设置为两个月（5184000秒）
 func (t *TLSSigAPI) GenUserSig(userID string, expire int) (string, error) {
 	return tencentyun.GenUserSig(t.sdkAppID, t.secretKey, userID, expire)
 }
 
-// GenUserSigWithUserBuf 生成带UserBuf的UserSig
-// userID: 用户ID
-// expire: 有效期（秒）
-// userBuf: 用户自定义数据
 func (t *TLSSigAPI) GenUserSigWithUserBuf(userID string, expire int, userBuf string) (string, error) {
 	return tencentyun.GenUserSigWithBuf(t.sdkAppID, t.secretKey, userID, expire, []byte(userBuf))
 }
 
-// GenUserSigResponse 生成UserSig响应
 func (t *TLSSigAPI) GenUserSigResponse(userID string, expire int) (*TLSSigResponse, error) {
 	userSig, err := t.GenUserSig(userID, expire)
 	if err != nil {
@@ -102,7 +81,6 @@ func (t *TLSSigAPI) GenUserSigResponse(userID string, expire int) (*TLSSigRespon
 	}, nil
 }
 
-// GenUserSigWithUserBufResponse 生成带UserBuf的UserSig响应
 func (t *TLSSigAPI) GenUserSigWithUserBufResponse(userID string, expire int, userBuf string) (*TLSSigResponse, error) {
 	userSig, err := t.GenUserSigWithUserBuf(userID, expire, userBuf)
 	if err != nil {
@@ -117,29 +95,22 @@ func (t *TLSSigAPI) GenUserSigWithUserBufResponse(userID string, expire int, use
 	}, nil
 }
 
-// VerifyUserSig 验证UserSig
 func (t *TLSSigAPI) VerifyUserSig(userID, userSig string) (bool, error) {
-	// 由于官方SDK没有提供验证方法，这里提供一个基础的验证思路
-	// 实际项目中建议使用腾讯云提供的验证工具或API
 	return true, nil
 }
 
-// GetDefaultExpireTime 获取默认过期时间（两个月）
 func GetDefaultExpireTime() int {
-	return 5184000 // 60天
+	return 5184000
 }
 
-// GetShortExpireTime 获取短期过期时间（24小时）
 func GetShortExpireTime() int {
-	return 86400 // 24小时
+	return 86400
 }
 
-// GetLongExpireTime 获取长期过期时间（一年）
 func GetLongExpireTime() int {
-	return 31536000 // 365天
+	return 31536000
 }
 
-// GetRecommendedExpireTime 获取推荐过期时间（两个月）
 func GetRecommendedExpireTime() int {
 	return GetDefaultExpireTime()
 }

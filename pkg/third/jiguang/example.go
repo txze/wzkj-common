@@ -41,7 +41,7 @@ func ExampleCustomClient() {
 	}
 
 	// 创建客户端
-	client, err := NewClient(config)
+	client, err := newClient(config)
 	if err != nil {
 		log.Printf("创建客户端失败: %v", err)
 		return
@@ -65,7 +65,7 @@ func ExampleCustomClient() {
 // ExampleWithErrorHandling 展示完整的错误处理
 func ExampleWithErrorHandling() {
 	// 初始化客户端
-	err := Init()
+	err := Init(&Config{})
 	if err != nil {
 		log.Fatalf("初始化极光客户端失败: %v", err)
 	}

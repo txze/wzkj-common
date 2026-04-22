@@ -1,6 +1,8 @@
 module github.com/txze/wzkj-common
 
-go 1.25.0
+go 1.21
+
+toolchain go1.24.1
 
 require (
 	github.com/alibabacloud-go/darabonba-openapi/v2 v2.1.16
@@ -37,6 +39,7 @@ require (
 	go.etcd.io/etcd/client/v3 v3.5.10
 	go.mongodb.org/mongo-driver v1.17.9
 	go.uber.org/zap v1.21.0
+	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/driver/postgres v1.6.0

@@ -6,13 +6,18 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/spf13/viper"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+type EtcdConfigParams struct {
+	Endpoint   string `mapstructure:"endpoint"`
+	Path       string `mapstructure:"path"`
+	ServerHost string `mapstructure:"server_host"`
+	ServerPort int    `mapstructure:"server_port"`
+}
+
 func EtcdConfig(endpoint string, path string) {
 	var err error
-	// 默认指定目标文件路径
 	if _, err = os.Stat("./etcd"); err != nil && !os.IsNotExist(err) {
 		panic(err)
 	}
@@ -48,34 +53,16 @@ func EtcdConfig(endpoint string, path string) {
 		panic(err)
 	}
 
-	// 创建viper对象
 	InitConfig(configPath, Yaml, ".")
 }
 
-func InitEtcdConfig(name string, paths ...string) {
-	var err error
-	var conf = viper.New()
-	conf.SetConfigName(name)
-	conf.SetConfigType(Yaml)
-
-	if len(paths) == 0 {
-		paths = []string{"."}
-	}
-
-	for _, path := range paths {
-		conf.AddConfigPath(path)
-	}
-
-	err = conf.ReadInConfig()
-	if err != nil {
-		panic(err)
+func InitEtcdConfigWithParams(cfg *EtcdConfigParams) {
+	if cfg == nil {
+		panic("etcd配置不能为空")
 	}
 
 	EtcdConfig(
-		conf.GetString("etcd.endpoint"),
-		conf.GetString("etcd.path"),
+		cfg.Endpoint,
+		cfg.Path,
 	)
-
-	viper.Set("server.host", conf.GetString("server.host"))
-	viper.Set("server.port", conf.GetInt("server.port"))
 }
